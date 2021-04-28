@@ -1,0 +1,33 @@
+<div #container
+	 [style.position]="'absolute'"
+	 [style.overflow-x]="'scroll'"
+	 [style.overflow-y]="'hidden'"
+	 [style.width]="'100%'"
+	 [style.height]="'100%'">
+
+	<canvas #canvas
+			(touchstart)="canvasTouchStart($event)"
+			(touchmove)="canvasTouchMove($event)"></canvas>
+
+	<div [style.position]="'absolute'"
+		 [style.width.px]="2"
+		 [style.height]="'100%'"
+		 [style.background-color]="'#ababab'"
+		 [style.top.px]="0"
+		 [style.left.px]="cursorPosition"
+		 [style.display]="isPlaying() ? '' : 'none'"
+		 [style.transform]="'translate(-50%, 0)'"></div>
+
+	<!-- [style.transition]="'left 0.2s'" -->
+
+	<div [style.position]="'absolute'"
+		 [style.left.px]="20"
+		 [style.top.px]="0">
+
+		<ion-button (click)="play()">Start</ion-button>
+		<ion-button (click)="pause()">Pause</ion-button>
+		<ion-button (click)="stop()">Stop</ion-button>
+
+	</div>
+
+</div>

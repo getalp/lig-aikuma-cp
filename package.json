@@ -1,15 +1,17 @@
 {
   "name": "lig-aikuma-cp",
   "version": "0.0.1",
-  "author": "Ionic Framework",
-  "homepage": "https://ionicframework.com/",
+  "author": "LIG",
+  "homepage": "https://www.liglab.fr/",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
-    "test": "ng test",
     "lint": "ng lint",
-    "e2e": "ng e2e"
+    "android-live": "ionic cap run android -l --external",
+    "android": "ionic cap run android",
+    "ios-live": "ionic cap run ios -l --external",
+    "ios": "ionic cap run ios"
   },
   "private": true,
   "dependencies": {
@@ -19,10 +21,14 @@
     "@angular/platform-browser": "~11.2.0",
     "@angular/platform-browser-dynamic": "~11.2.0",
     "@angular/router": "~11.2.0",
+    "@capacitor/android": "^2.4.7",
     "@capacitor/core": "2.4.7",
     "@ionic/angular": "^5.5.2",
+    "@ionic/pwa-elements": "^3.0.2",
+    "css-element-queries": "^1.2.3",
     "rxjs": "~6.6.0",
     "tslib": "^2.0.0",
+    "waveform-data": "^4.0.0",
     "zone.js": "~0.10.2"
   },
   "devDependencies": {
@@ -37,8 +43,6 @@
     "@angular/language-service": "~11.2.0",
     "@capacitor/cli": "2.4.7",
     "@ionic/angular-toolkit": "^3.1.1",
-    "@types/jasmine": "~3.6.0",
-    "@types/jasminewd2": "~2.0.3",
     "@types/node": "^12.11.1",
     "@typescript-eslint/eslint-plugin": "4.16.1",
     "@typescript-eslint/parser": "4.16.1",
@@ -46,17 +50,9 @@
     "eslint-plugin-import": "2.22.1",
     "eslint-plugin-jsdoc": "30.7.6",
     "eslint-plugin-prefer-arrow": "1.2.2",
-    "jasmine-core": "~3.6.0",
-    "jasmine-spec-reporter": "~5.0.0",
-    "karma": "~5.2.0",
-    "karma-chrome-launcher": "~3.1.0",
-    "karma-coverage": "~2.0.3",
-    "karma-coverage-istanbul-reporter": "~3.0.2",
-    "karma-jasmine": "~4.0.0",
-    "karma-jasmine-html-reporter": "^1.5.0",
-    "protractor": "~7.0.0",
+    "jetifier": "^1.6.6",
     "ts-node": "~8.3.0",
     "typescript": "~4.0.2"
   },
-  "description": "An Ionic project"
+  "description": "LIG-Aikuma"
 }
