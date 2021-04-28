@@ -25,5 +25,5 @@ every developer and `capacitor.config.json` should not be changed. Instead of th
 
 ### Windows
 If the path of Android Studio couldn't be resolved on Windows, you must specify its path in the Windows' registry. To do that,
-open the `regedit.exe` program (provided by Windows), and add a key `HKEY_LOCAL_MACHINE\SOFTWARE\Android Studio`, and add a
+open the `regedit.exe` program (provided by Windows), and add a key `HKEY_LOCAL_MACHINE\SOFTWARE\Android Studio`, then add a
 string value to it named `Path` and set to the path to the installation directory of Android Studio.
