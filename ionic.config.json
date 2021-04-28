@@ -1,0 +1,7 @@
+{
+  "name": "lig-aikuma-cp",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}
