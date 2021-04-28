@@ -20,7 +20,7 @@ The path of these IDEs should be resolved automatically but if you encounter the
 > in your capacitor.config.json to point to the location of studio64.exe, using JavaScript-escaped 
 > paths: ...
 
-**Do not follow the instruction**, this way of configuring the pass to the native IDE is not universal to
+**Do not follow the instruction**, this way of configuring the path to the native IDE is not universal to
 every developer and `capacitor.config.json` should not be changed. Instead of that, please follow the next sections.
 
 ### Windows
