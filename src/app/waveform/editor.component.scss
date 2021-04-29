@@ -1,3 +1,20 @@
 :host {
 	display: block;
 }
+
+.waveform-editor-container {
+	position: absolute;
+	overflow-x: scroll;
+	overflow-y: hidden;
+	width: 100%;
+	height: 100%;
+}
+
+.waveform-editor-cursor {
+	position: absolute;
+	width: 2px;
+	height: 100%;
+	background-color: #ababab;
+	top: 0;
+	transform: translate(-50%, 0);
+}
