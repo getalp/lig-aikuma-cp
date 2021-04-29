@@ -109,13 +109,14 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 	}
 
 	private loadAudioArray(buf: ArrayBuffer) {
-		this.audioArray = buf;
-		this.waveformData = null; // Reset the waveform data to force computation.
-		this.audioBuffer = null;
-		this.stop();
-		if (this.audioCtx != null) {
-			this.draw();
-		}
+		this.stop().then(() => {
+			this.audioArray = buf;
+			this.waveformData = null; // Reset the waveform data to force computation.
+			this.audioBuffer = null;
+			if (this.audioCtx != null) {
+				this.draw();
+			}
+		});
 	}
 
 	draw() {
