@@ -17,6 +17,6 @@ import {IonicModule} from "@ionic/angular";
 		WaveformEditorComponent
 	]
 })
-export class CompModule {
+export class WaveformModule {
 
 }
