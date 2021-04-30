@@ -27,6 +27,44 @@ Le dossier de l'enregistrement est nommé en fonction de :
 
 Le nommage du dossier pourra potentiellement être amélioré, à voir.
 
+Format d'un enregistrement brut :
+```json
+{
+	"date":"2021-04-30T15:35:39Z",
+	"recording_lang":"aad",
+	"origin":"",
+	"source":null,
+	"suffix":"",
+	"BitsPerSample":16,
+	"Format":"vnd.wave",
+	"file_type":"source",
+	"speakers":[
+
+	],
+	"durationMsec":5785,
+	"speaker_note":"",
+	"speaker_gender":"Unspecified",
+	"languages":[
+
+	],
+	"item_id":"vxgzgzqwilco",
+	"speaker_birth_year":0,
+	"speaker_name":"Théo",
+	"version":"\/v03",
+	"sampleRate":16000,
+	"user_id":"456188504",
+	"NumChannels":1,
+	"name":"210430-173539_aad_76c",
+	"location":[
+		0.0,
+		0.0
+	],
+	"device":"MOTOROLA-MOTO G(7) POWER",
+	"androidID":"76c8e1f8ed52968c",
+	"mother_tongue":"aai"
+}
+```
+
 ## Mode recording
 Le mode recording permet d'enregistrer un audio lié à des métadonnées, celles-ci doivent être les 
 suivantes :

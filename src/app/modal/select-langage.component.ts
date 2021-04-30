@@ -5,7 +5,7 @@ import {IonInfiniteScroll, ModalController} from "@ionic/angular";
 @Component({
 	selector: 'modal-select-langage',
 	templateUrl: './select-langage.component.html',
-	styleUrls: ['./select-langage.component.scss'],
+	styleUrls: [],
 })
 export class SelectLangageModal implements OnInit {
 

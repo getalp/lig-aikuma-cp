@@ -16,7 +16,11 @@ export class HomePage {
 		return this.modalCtl.create({
 			component: SelectLangageModal
 		}).then(r => {
-			return r.present();
+			return r.present().then(() => {
+				r.onWillDismiss().then(value => {
+					console.log("data: ", JSON.stringify(value.data));
+				});
+			});
 		});
 	}
 
