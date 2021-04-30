@@ -1,0 +1,26 @@
+<ion-header [translucent]="true">
+	<ion-toolbar>
+		<ion-title>Select langage</ion-title>
+		<ion-buttons slot="end">
+			<ion-button>Close</ion-button>
+		</ion-buttons>
+	</ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+
+	<ion-list>
+		<ion-item button *ngFor="let lang of langages">
+			<label>
+				<ion-label slot="start">{{ lang.code }}</ion-label>
+				<ion-label>{{ lang.printName }}</ion-label>
+			</label>
+		</ion-item>
+	</ion-list>
+
+	<ion-infinite-scroll threshold="100px" (ionInfinite)="doInfinite($event.target)">
+		<ion-infinite-scroll-content loadingSpinner="bubbles" loadingText="Loading langages...">
+		</ion-infinite-scroll-content>
+	</ion-infinite-scroll>
+
+</ion-content>
