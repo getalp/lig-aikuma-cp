@@ -7,12 +7,12 @@ import {IonicModule, IonicRouteStrategy} from '@ionic/angular';
 
 import {AppComponent} from './app.component';
 import {AppRoutingModule} from './app-routing.module';
-import {SelectLangageComponent} from "./modal/select-langage.component";
+import {SelectLangageModal} from "./modal/select-langage.component";
 
 @NgModule({
 	declarations: [
 		AppComponent,
-		SelectLangageComponent
+		SelectLangageModal
 	],
 	entryComponents: [],
 	imports: [

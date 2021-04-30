@@ -1,7 +1,7 @@
 import {Component} from '@angular/core';
 import {ModalController} from "@ionic/angular";
 
-import {SelectLangageComponent} from "../modal/select-langage.component";
+import {SelectLangageModal} from "../modal/select-langage.component";
 
 @Component({
 	selector: 'app-home',
@@ -14,7 +14,7 @@ export class HomePage {
 
 	testModal(): Promise<void> {
 		return this.modalCtl.create({
-			component: SelectLangageComponent
+			component: SelectLangageModal
 		}).then(r => {
 			return r.present();
 		});

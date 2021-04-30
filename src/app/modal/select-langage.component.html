@@ -3,9 +3,6 @@
 	<ion-header [translucent]="true">
 		<ion-toolbar>
 			<ion-title>Select langage</ion-title>
-			<!--0ion-buttons slot="end">
-				<ion-button>Close</ion-button>
-			</0ion-buttons>-->
 		</ion-toolbar>
 		<ion-toolbar>
 			<ion-searchbar (ionInput)="doSearch($event)" [debounce]="1000"></ion-searchbar>
@@ -15,7 +12,7 @@
 	<ion-content [fullscreen]="true">
 
 		<ion-list>
-			<ion-item button *ngFor="let lang of langages">
+			<ion-item button *ngFor="let lang of langages" (click)="langageClicked(lang.code)">
 				<label>
 					<ion-label slot="start">{{ lang.code }}</ion-label>
 					<ion-label>{{ lang.printName }}</ion-label>
