@@ -27,7 +27,8 @@ export class Iso639Service {
 						const parts = lines[i].split("\t");
 						langages.push({
 							code: parts[0],
-							printName: parts[1]
+							printName: parts[1],
+							searchBase: parts[0].toLowerCase() + parts[1].toLowerCase()
 						});
 					}
 					resolve(langages);
@@ -44,4 +45,5 @@ export class Iso639Service {
 export interface Langage {
 	code: string;
 	printName: string;
+	searchBase: string;
 }
