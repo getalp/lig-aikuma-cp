@@ -1,4 +1,4 @@
-<ion-header [translucent]="true">
+<ion-header translucent>
 	<ion-toolbar>
 		<ion-buttons slot="start">
 			<ion-back-button defaultHref="/"></ion-back-button>
@@ -7,13 +7,12 @@
 	</ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true" class="ion-padding">
-
-	<ion-toolbar>
-		<ion-title size="large">Recording information</ion-title>
-	</ion-toolbar>
+<ion-content fullscreen class="ion-padding">
 
 	<ion-list lines="full">
+		<ion-list-header>
+			<h4>Recording information</h4>
+		</ion-list-header>
 		<ion-item>
 			<ion-label>Speaker</ion-label>
 			<app-speaker-select></app-speaker-select>

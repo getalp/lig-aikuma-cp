@@ -27,8 +27,8 @@ export class SpeakerService {
 				const speakers: Speaker[] = [];
 				for (let speakerSerialized of data) {
 					const speaker = new Speaker(speakerSerialized["name"]);
-					speaker.nativeLangage = speakerSerialized["native_langage"];
-					speaker.auxLangages = speakerSerialized["aux_langages"];
+					speaker.nativeLanguage = speakerSerialized["native_language"];
+					speaker.otherLanguages = speakerSerialized["other_languages"];
 					speaker.regionOfOrigin = speakerSerialized["region_of_origin"];
 					speaker.notes = speakerSerialized["notes"];
 					speaker.yearOfBirth = speakerSerialized["year_of_birth"];
@@ -52,8 +52,8 @@ export class SpeakerService {
 			for (let speaker of speakers) {
 				data.push({
 					"name": speaker.name,
-					"native_langage": speaker.nativeLangage,
-					"aux_langages": speaker.auxLangages,
+					"native_language": speaker.nativeLanguage,
+					"other_languages": speaker.otherLanguages,
 					"notes": speaker.notes,
 					"year_of_birth": speaker.yearOfBirth,
 					"gender": Gender[speaker.gender]
@@ -82,8 +82,8 @@ export enum Gender {
 
 export class Speaker {
 
-	public nativeLangage: string;
-	public auxLangages: string[];
+	public nativeLanguage: string;
+	public otherLanguages: string[];
 	public regionOfOrigin?: string;
 	public notes?: string;
 	public yearOfBirth?: number;
@@ -96,8 +96,8 @@ export class Speaker {
 
 interface SpeakerSerialized {
 	"name": string,
-	"native_langage": string;
-	"aux_langages": string[];
+	"native_language": string;
+	"other_languages": string[];
 	"region_of_origin"?: string;
 	"notes"?: string;
 	"year_of_birth"?: number;

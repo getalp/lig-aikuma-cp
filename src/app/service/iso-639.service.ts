@@ -3,8 +3,8 @@ import {HttpClient} from "@angular/common/http";
 
 
 interface CacheData {
-	list: Langage[];
-	associated: { [key: string]: Langage };
+	list: Language[];
+	associated: { [key: string]: Language };
 }
 
 
@@ -29,7 +29,7 @@ export class Iso639Service {
 					const textDecoder = new TextDecoder(Iso639Service.LANG_ENCODING);
 					const text = textDecoder.decode(value);
 					const lines = text.split("\n");
-					const langages: Langage[] = [];
+					const langages: Language[] = [];
 					const langagesAssociated = {};
 					for (let i = 1; i < lines.length; ++i) {
 						const parts = lines[i].split("\t");
@@ -53,23 +53,23 @@ export class Iso639Service {
 		return this.cache;
 	}
 
-	getLangages(): Promise<Langage[]> {
+	getLanguages(): Promise<Language[]> {
 		return this.getCache().then(data => data.list);
 	}
 
-	getAssociatedLangages(): Promise<{ [key: string]: Langage }> {
+	getAssociatedLanguages(): Promise<{ [key: string]: Language }> {
 		return this.getCache().then(data => data.associated);
 	}
 
-	getLangage(code: string): Promise<Langage> {
-		return this.getAssociatedLangages().then(langages => {
+	getLanguage(code: string): Promise<Language> {
+		return this.getAssociatedLanguages().then(langages => {
 			return langages[code];
 		});
 	}
 
 }
 
-export interface Langage {
+export interface Language {
 	code: string;
 	printName: string;
 	searchBase: string;

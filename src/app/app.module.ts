@@ -10,6 +10,7 @@ import {AppRoutingModule} from './app-routing.module';
 import {SelectLangageModal} from "./modal/select-langage.component";
 import {SelectSpeakerModal} from "./modal/select-speaker.component";
 import {CreateSpeakerModal} from "./modal/create-speaker.component";
+import {WidgetModule} from "./widget/module";
 
 @NgModule({
 	declarations: [
@@ -23,7 +24,8 @@ import {CreateSpeakerModal} from "./modal/create-speaker.component";
 		BrowserModule,
 		IonicModule.forRoot(),
 		AppRoutingModule,
-		HttpClientModule
+		HttpClientModule,
+		WidgetModule
 	],
 	providers: [
 		{

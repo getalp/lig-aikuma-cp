@@ -6,10 +6,56 @@
 		</ion-toolbar>
 	</ion-header>
 
-	<ion-content fullscreen>
+	<ion-content fullscreen class="ion-padding">
 
-		<ion-list>
+		<ion-list lines="full">
+			<ion-list-header>
+				<h4>Identity</h4>
+			</ion-list-header>
+			<ion-item>
+				<ion-label>Name</ion-label>
+				<ion-input type="text" placeholder="Ex: Jean"></ion-input>
+			</ion-item>
+			<ion-item>
+				<ion-label>Year of Birth</ion-label>
+				<ion-input type="number" placeholder="Ex: 1990"></ion-input>
+			</ion-item>
+			<ion-item>
+				<ion-label>Gender</ion-label>
+				<ion-select value="unknown" interface="popover">
+					<ion-select-option value="unknown">Unknown</ion-select-option>
+					<ion-select-option value="male">Male</ion-select-option>
+					<ion-select-option value="female">Female</ion-select-option>
+				</ion-select>
+			</ion-item>
+		</ion-list>
 
+		<ion-list lines="full">
+			<ion-list-header>
+				<h4>Additional information</h4>
+			</ion-list-header>
+			<ion-item>
+				<ion-label>Region of Origin</ion-label>
+				<ion-input type="text" placeholder="Ex: Mexique"></ion-input>
+			</ion-item>
+			<ion-item>
+				<ion-label>Notes</ion-label>
+				<ion-textarea></ion-textarea>
+			</ion-item>
+		</ion-list>
+
+		<ion-list lines="full">
+			<ion-list-header>
+				<h4>Spoken languages</h4>
+			</ion-list-header>
+			<ion-item>
+				<ion-label>Native language</ion-label>
+				<app-langage-select [optional]="false" (langageSelected)="setNativeLanguage($event)"></app-langage-select>
+			</ion-item>
+			<ion-item *ngFor="let _ of otherLanguagesIdx; let index = index;">
+				<ion-label>{{ otherLanguageOrdinals[index] || otherLanguageOrdinals["default"](index) }} language</ion-label>
+				<app-langage-select [lang]="otherLanguages[index]" (langageSelected)="setOtherLanguage(index, $event)"></app-langage-select>
+			</ion-item>
 		</ion-list>
 
 	</ion-content>

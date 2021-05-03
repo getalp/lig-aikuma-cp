@@ -1,7 +1,7 @@
 import {Component, Input, Output, EventEmitter} from '@angular/core';
 import {ModalController} from "@ionic/angular";
 import {SelectLangageModal} from "../modal/select-langage.component";
-import {Iso639Service, Langage} from "../service/iso-639.service";
+import {Iso639Service, Language} from "../service/iso-639.service";
 
 
 @Component({
@@ -12,10 +12,13 @@ export class LangageSelectComponent {
 
 	private static readonly NO_SELECT_TEXT = "Select";
 
-	@Output()
-	public langageSelected = new EventEmitter<Langage>();
+	@Input()
+	public optional: boolean = true;
 
-	private langage?: Langage;
+	@Output()
+	public langageSelected = new EventEmitter<Language>();
+
+	private langage?: Language;
 	public text: string = LangageSelectComponent.NO_SELECT_TEXT;
 
 	constructor(
@@ -27,7 +30,7 @@ export class LangageSelectComponent {
 		this.modalCtl.create({
 			component: SelectLangageModal,
 			componentProps: {
-				"optional": true
+				"optional": this.optional
 			}
 		}).then(r => {
 			return r.present().then(() => {
@@ -42,12 +45,12 @@ export class LangageSelectComponent {
 
 	@Input()
 	set lang(langageCode: string) {
-		this.iso639Service.getLangage(langageCode).then(lang => {
+		this.iso639Service.getLanguage(langageCode).then(lang => {
 			this.setLangage(lang);
 		});
 	}
 
-	private setLangage(lang?: Langage) {
+	private setLangage(lang?: Language) {
 		this.langage = lang;
 		this.text = (lang == null) ? LangageSelectComponent.NO_SELECT_TEXT : this.langage.printName;
 		this.langageSelected.emit(lang);

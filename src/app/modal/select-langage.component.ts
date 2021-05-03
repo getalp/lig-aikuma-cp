@@ -1,5 +1,5 @@
 import {Component, Input, OnInit, ViewChild} from '@angular/core';
-import {Iso639Service, Langage} from "../service/iso-639.service";
+import {Iso639Service, Language} from "../service/iso-639.service";
 import {IonInfiniteScroll, ModalController} from "@ionic/angular";
 
 
@@ -16,7 +16,7 @@ export class SelectLangageModal implements OnInit {
 	private infiniteScroll: IonInfiniteScroll;
 	private langagesOffset: number = 0;
 	private filter: string = "";
-	public langages: Langage[] = [];
+	public langages: Language[] = [];
 
 	@Input()
 	public optional: boolean = false;
@@ -26,8 +26,8 @@ export class SelectLangageModal implements OnInit {
 		private modalCtl: ModalController
 	) { }
 
-	getLangages(): Promise<Langage[]> {
-		return this.iso639Service.getLangages();
+	getLangages(): Promise<Language[]> {
+		return this.iso639Service.getLanguages();
 	}
 
 	doInfinite() {
@@ -45,7 +45,7 @@ export class SelectLangageModal implements OnInit {
 		this.loadMore().then();
 	}
 
-	langageClicked(langage?: Langage) {
+	langageClicked(langage?: Language) {
 		this.modalCtl.dismiss({langage: langage}).then();
 	}
 

@@ -2,6 +2,7 @@ import {Component, OnInit} from '@angular/core';
 import {ModalController} from "@ionic/angular";
 import {Speaker, SpeakerService} from "../service/speaker.service";
 import {Iso639Service} from "../service/iso-639.service";
+import {CreateSpeakerModal} from "./create-speaker.component";
 
 
 @Component({
@@ -36,7 +37,7 @@ export class SelectSpeakerModal implements OnInit {
 	}
 
 	getSpeakerExtra(speaker: Speaker): Promise<string> {
-		return this.iso639Service.getLangage(speaker.nativeLangage)
+		return this.iso639Service.getLanguage(speaker.nativeLanguage)
 			.then(lang => {
 				return lang.printName;
 			});
@@ -52,7 +53,17 @@ export class SelectSpeakerModal implements OnInit {
 	// New Speaker //
 
 	onClickNew() {
-
+		this.modalCtl.create({
+			component: CreateSpeakerModal
+		}).then(r => {
+			return r.present().then(() => {
+				r.onWillDismiss().then(value => {
+					if (value.data != null) {
+						console.log("Created speaker: ", value.data);
+					}
+				});
+			});
+		});
 	}
 
 }
