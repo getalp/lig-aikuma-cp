@@ -1,6 +1,6 @@
 <div>
 
-	<ion-header [translucent]="true">
+	<ion-header translucent>
 		<ion-toolbar>
 			<ion-title>Select langage</ion-title>
 		</ion-toolbar>
@@ -9,14 +9,17 @@
 		</ion-toolbar>
 	</ion-header>
 
-	<ion-content [fullscreen]="true">
+	<ion-content fullscreen>
 
 		<ion-list>
-			<ion-item button *ngFor="let lang of langages" (click)="langageClicked(lang.code)">
-				<label>
-					<ion-label slot="start">{{ lang.code }}</ion-label>
-					<ion-label>{{ lang.printName }}</ion-label>
-				</label>
+			<ion-item button *ngIf="optional" (click)="langageClicked()">
+				<ion-label>Unknown</ion-label>
+			</ion-item>
+			<ion-item button *ngFor="let lang of langages" (click)="langageClicked(lang)">
+				<ion-label>
+					<h2>{{ lang.printName }}</h2>
+					<h4>{{ lang.code }}</h4>
+				</ion-label>
 			</ion-item>
 		</ion-list>
 

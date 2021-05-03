@@ -7,13 +7,16 @@ import {IonicModule} from '@ionic/angular';
 import {RecordingPageRoutingModule} from './recording-routing.module';
 
 import {RecordingPage} from './recording.page';
+import {WidgetModule} from "../widget/module";
+
 
 @NgModule({
 	imports: [
 		CommonModule,
 		FormsModule,
 		IonicModule,
-		RecordingPageRoutingModule
+		RecordingPageRoutingModule,
+		WidgetModule
 	],
 	declarations: [RecordingPage]
 })

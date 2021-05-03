@@ -9,12 +9,14 @@ import {AppComponent} from './app.component';
 import {AppRoutingModule} from './app-routing.module';
 import {SelectLangageModal} from "./modal/select-langage.component";
 import {SelectSpeakerModal} from "./modal/select-speaker.component";
+import {CreateSpeakerModal} from "./modal/create-speaker.component";
 
 @NgModule({
 	declarations: [
 		AppComponent,
 		SelectLangageModal,
-		SelectSpeakerModal
+		SelectSpeakerModal,
+		CreateSpeakerModal
 	],
 	entryComponents: [],
 	imports: [

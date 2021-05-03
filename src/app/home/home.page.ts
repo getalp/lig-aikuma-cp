@@ -1,7 +1,5 @@
 import {Component} from '@angular/core';
-import {ModalController} from "@ionic/angular";
 
-import {SelectLangageModal} from "../modal/select-langage.component";
 
 @Component({
 	selector: 'app-home',
@@ -10,18 +8,25 @@ import {SelectLangageModal} from "../modal/select-langage.component";
 })
 export class HomePage {
 
-	constructor(private modalCtl: ModalController) { }
+	public buttons = [
+		{
+			title: "Recording",
+			children: [
+				{title: "Recording", icon: "mic", router: {link: "/recording"}},
+				{title: "Elicitation", icon: "images", router: {link: "/elicitation"}},
+			]
+		},
+		{
+			title: "Editing",
+			children: [
+				{title: "Respeaking", icon: "volume-high"},
+				{title: "Translating", icon: "earth"},
+			]
+		}
+	];
 
-	testModal(): Promise<void> {
-		return this.modalCtl.create({
-			component: SelectLangageModal
-		}).then(r => {
-			return r.present().then(() => {
-				r.onWillDismiss().then(value => {
-					console.log("data: ", JSON.stringify(value.data));
-				});
-			});
-		});
+	constructor() {
+
 	}
 
 }

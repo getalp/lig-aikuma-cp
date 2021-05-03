@@ -1,15 +1,29 @@
 <div>
 
-	<ion-header [translucent]="true">
+	<ion-header translucent>
 		<ion-toolbar>
 			<ion-title>Select speaker</ion-title>
+			<ion-buttons slot="end">
+				<ion-fab-button size="small" (click)="onClickNew()">
+					<ion-icon name="add"></ion-icon>
+				</ion-fab-button>
+			</ion-buttons>
 		</ion-toolbar>
 		<ion-toolbar>
 			<ion-searchbar (ionInput)="doSearch($event)" [debounce]="1000"></ion-searchbar>
 		</ion-toolbar>
 	</ion-header>
 
-	<ion-content [fullscreen]="true">
+	<ion-content fullscreen>
+
+		<ion-list>
+			<ion-item button *ngFor="let speaker of speakers" (click)="speakerClicked(speaker)">
+				<label>
+					<ion-label slot="start">{{ speaker.name }}</ion-label>
+					<ion-label>{{ getSpeakerExtra(speaker) | async }}</ion-label>
+				</label>
+			</ion-item>
+		</ion-list>
 
 	</ion-content>
 

@@ -1,12 +1,33 @@
 <ion-header [translucent]="true">
 	<ion-toolbar>
 		<ion-buttons slot="start">
-			<ion-menu-button></ion-menu-button>
+			<ion-back-button defaultHref="/"></ion-back-button>
 		</ion-buttons>
 		<ion-title>Recording</ion-title>
 	</ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-	<p>Recording</p>
+<ion-content [fullscreen]="true" class="ion-padding">
+
+	<ion-toolbar>
+		<ion-title size="large">Recording information</ion-title>
+	</ion-toolbar>
+
+	<ion-list lines="full">
+		<ion-item>
+			<ion-label>Speaker</ion-label>
+			<app-speaker-select></app-speaker-select>
+		</ion-item>
+		<ion-item>
+			<ion-label>Recording langage</ion-label>
+			<app-langage-select></app-langage-select>
+		</ion-item>
+		<ion-item>
+			<ion-label>Notes</ion-label>
+			<ion-textarea></ion-textarea>
+		</ion-item>
+	</ion-list>
+
+	<ion-button expand="full">Enregistrer</ion-button>
+
 </ion-content>
