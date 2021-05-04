@@ -1,6 +1,6 @@
 import {Component, OnInit} from '@angular/core';
 import {ModalController} from "@ionic/angular";
-import {Speaker, SpeakerService} from "../service/speaker.service";
+import {SpeakerService, Speaker} from "../service/speaker.service";
 import {Iso639Service} from "../service/iso-639.service";
 import {CreateSpeakerModal} from "./create-speaker.component";
 
@@ -12,7 +12,7 @@ import {CreateSpeakerModal} from "./create-speaker.component";
 })
 export class SelectSpeakerModal implements OnInit {
 
-	public speakers: Speaker[] = [];
+	public speakers: [Speaker, Promise<string>][] = [];
 	private filter: string = "";
 
 	constructor(
@@ -30,27 +30,31 @@ export class SelectSpeakerModal implements OnInit {
 		this.load();
 	}
 
-	speakerClicked(speaker: Speaker) {
+	onClickSpeaker(speaker: Speaker) {
 		this.modalCtl.dismiss({
 			speaker: speaker
 		}).then();
 	}
 
-	getSpeakerExtra(speaker: Speaker): Promise<string> {
-		return this.iso639Service.getLanguage(speaker.nativeLanguage)
-			.then(lang => {
-				return lang.printName;
+	onClickEditSpeaker(speaker: Speaker) {
+		this.modalCtl.create({
+			component: CreateSpeakerModal,
+			componentProps: {
+				"editSpeaker": speaker
+			}
+		}).then(r => {
+			return r.present().then(() => {
+				r.onWillDismiss().then(value => {
+					if (value.data != null) {
+						speaker.apply(value.data.speaker);
+						this.speakerService.save().then(() => {
+							this.load();
+						});
+					}
+				});
 			});
-	}
-
-	private load() {
-		this.speakerService.load().then(speakers => {
-			this.speakers = speakers;
-			// TODO: Apply Filter
 		});
 	}
-
-	// New Speaker //
 
 	onClickNew() {
 		this.modalCtl.create({
@@ -59,11 +63,41 @@ export class SelectSpeakerModal implements OnInit {
 			return r.present().then(() => {
 				r.onWillDismiss().then(value => {
 					if (value.data != null) {
-						console.log("Created speaker: ", value.data);
+						const speaker: Speaker = value.data.speaker;
+						if (this.filterSpeaker(speaker)) {
+							this.addSpeaker(speaker);
+						}
 					}
 				});
 			});
 		});
+	}
+
+	// Internal //
+
+	private load() {
+		this.speakerService.load().then(speakers => {
+			this.speakers = [];
+			for (let speaker of speakers) {
+				if (this.filterSpeaker(speaker)) {
+					this.addSpeaker(speaker);
+				}
+			}
+		});
+	}
+
+	private filterSpeaker(speaker: Speaker): boolean {
+		return speaker.name.toLowerCase().includes(this.filter);
+	}
+
+	private addSpeaker(speaker: Speaker) {
+		this.speakers.push([
+			speaker,
+			this.iso639Service.getLanguage(speaker.nativeLanguage)
+				.then(lang => {
+					return lang == null ? "Unknown native language" : lang.printName;
+				})
+		])
 	}
 
 }

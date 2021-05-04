@@ -62,9 +62,13 @@ export class Iso639Service {
 	}
 
 	getLanguage(code: string): Promise<Language> {
-		return this.getAssociatedLanguages().then(langages => {
-			return langages[code];
-		});
+		if (code == null) {
+			return Promise.resolve(null);
+		} else {
+			return this.getAssociatedLanguages().then(langages => {
+				return langages[code];
+			});
+		}
 	}
 
 }

@@ -12,11 +12,9 @@ export class LangageSelectComponent {
 
 	private static readonly NO_SELECT_TEXT = "Select";
 
-	@Input()
-	public optional: boolean = true;
-
-	@Output()
-	public langageSelected = new EventEmitter<Language>();
+	@Input() optional: boolean | "" = false;
+	@Output() langageSelected = new EventEmitter<Language>();
+	@Output() langChanged = new EventEmitter<string>();
 
 	private langage?: Language;
 	public text: string = LangageSelectComponent.NO_SELECT_TEXT;
@@ -27,16 +25,17 @@ export class LangageSelectComponent {
 	) { }
 
 	onClick() {
+
 		this.modalCtl.create({
 			component: SelectLangageModal,
 			componentProps: {
-				"optional": this.optional
+				"optional": this.optional === "" || this.optional
 			}
 		}).then(r => {
 			return r.present().then(() => {
 				r.onWillDismiss().then(value => {
 					if (value.data != null) {
-						this.setLangage(value.data.langage);
+						this.setLangage(value.data.langage, true);
 					}
 				});
 			});
@@ -46,14 +45,17 @@ export class LangageSelectComponent {
 	@Input()
 	set lang(langageCode: string) {
 		this.iso639Service.getLanguage(langageCode).then(lang => {
-			this.setLangage(lang);
+			this.setLangage(lang, false);
 		});
 	}
 
-	private setLangage(lang?: Language) {
+	private setLangage(lang: Language, emitChange: boolean) {
 		this.langage = lang;
 		this.text = (lang == null) ? LangageSelectComponent.NO_SELECT_TEXT : this.langage.printName;
 		this.langageSelected.emit(lang);
+		if (emitChange) {
+			this.langChanged.emit(lang?.code);
+		}
 	}
 
 }

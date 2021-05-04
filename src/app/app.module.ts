@@ -11,6 +11,8 @@ import {SelectLangageModal} from "./modal/select-langage.component";
 import {SelectSpeakerModal} from "./modal/select-speaker.component";
 import {CreateSpeakerModal} from "./modal/create-speaker.component";
 import {WidgetModule} from "./widget/module";
+import {FormsModule} from "@angular/forms";
+
 
 @NgModule({
 	declarations: [
@@ -20,13 +22,14 @@ import {WidgetModule} from "./widget/module";
 		CreateSpeakerModal
 	],
 	entryComponents: [],
-	imports: [
-		BrowserModule,
-		IonicModule.forRoot(),
-		AppRoutingModule,
-		HttpClientModule,
-		WidgetModule
-	],
+    imports: [
+        BrowserModule,
+        IonicModule.forRoot(),
+        AppRoutingModule,
+        HttpClientModule,
+		FormsModule,
+        WidgetModule
+    ],
 	providers: [
 		{
 			provide: RouteReuseStrategy,
