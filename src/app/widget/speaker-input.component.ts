@@ -1,7 +1,8 @@
 import {Component, Output, EventEmitter} from '@angular/core';
 import {ModalController} from "@ionic/angular";
-import {Speaker, SpeakerService} from "../service/speaker.service";
+import {SpeakerService} from "../service/speaker.service";
 import {SelectSpeakerModal} from "../modal/select-speaker.component";
+import {Speaker} from "../speaker";
 
 
 @Component({

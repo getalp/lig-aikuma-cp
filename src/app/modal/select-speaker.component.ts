@@ -1,8 +1,9 @@
 import {Component, OnInit} from '@angular/core';
 import {ModalController} from "@ionic/angular";
-import {SpeakerService, Speaker} from "../service/speaker.service";
+import {SpeakerService} from "../service/speaker.service";
 import {Iso639Service} from "../service/iso-639.service";
 import {CreateSpeakerModal} from "./create-speaker.component";
+import {Speaker} from "../speaker";
 
 
 @Component({
