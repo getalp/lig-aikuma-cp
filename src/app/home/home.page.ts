@@ -2,7 +2,7 @@ import {Component} from '@angular/core';
 
 
 @Component({
-	selector: 'app-home',
+	selector: 'page-home',
 	templateUrl: './home.page.html',
 	styleUrls: ['./home.page.scss'],
 })
@@ -12,8 +12,8 @@ export class HomePage {
 		{
 			title: "Recording",
 			children: [
-				{title: "Recording", icon: "mic", router: {link: "/recording"}},
-				{title: "Elicitation", icon: "images", router: {link: "/elicitation"}},
+				{title: "Recording", icon: "mic", router: {link: "/recording", data: {mode: "classic"}}},
+				{title: "Elicitation", icon: "images", router: {link: "/recording", data: {mode: "elicitation"}}},
 			]
 		},
 		{
@@ -25,8 +25,6 @@ export class HomePage {
 		}
 	];
 
-	constructor() {
-
-	}
+	constructor() { }
 
 }

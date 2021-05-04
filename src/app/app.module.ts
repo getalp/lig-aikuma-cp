@@ -12,11 +12,18 @@ import {SelectSpeakerModal} from "./modal/select-speaker.component";
 import {CreateSpeakerModal} from "./modal/create-speaker.component";
 import {WidgetModule} from "./widget/module";
 import {FormsModule} from "@angular/forms";
+import {HomePage} from "./home/home.page";
+import {RecordingInfoPage} from "./recording/recording-info.page";
 
 
 @NgModule({
 	declarations: [
 		AppComponent,
+		// Home
+		HomePage,
+		// Recording
+		RecordingInfoPage,
+		// Modals
 		SelectLangageModal,
 		SelectSpeakerModal,
 		CreateSpeakerModal

@@ -1,6 +1,10 @@
 import {NgModule} from '@angular/core';
 import {PreloadAllModules, RouterModule, Routes} from '@angular/router';
 
+import {RecordingInfoPage} from "./recording/recording-info.page";
+import {HomePage} from "./home/home.page";
+
+
 const routes: Routes = [
 	{
 		path: '',
@@ -9,13 +13,22 @@ const routes: Routes = [
 	},
 	{
 		path: 'home',
-		loadChildren: () => import('./home/home.module').then(m => m.HomePageModule)
+		component: HomePage
+		// loadChildren: () => import('./home/home.module').then(m => m.HomePageModule)
 	},
 	{
 		path: 'recording',
-		loadChildren: () => import('./recording/recording.module').then(m => m.RecordingPageModule)
+		component: RecordingInfoPage,
+		children: [
+			/*{
+				path: "classic",
+
+			}*/
+		]
+		// loadChildren: () => import('./recording/recording.module').then(m => m.RecordingPageModule)
 	}
 ];
+
 
 @NgModule({
 	imports: [

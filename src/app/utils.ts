@@ -1,4 +1,3 @@
-
 export function base64ToBuffer(base64: string): ArrayBuffer {
   const chars = atob(base64);
   const array = new Uint8Array(chars.length);

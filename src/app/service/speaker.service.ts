@@ -1,6 +1,7 @@
 import {Injectable} from '@angular/core';
 
-import {FilesystemDirectory, FilesystemEncoding, Plugins} from '@capacitor/core';
+import {FilesystemEncoding, Plugins} from '@capacitor/core';
+import {getReadOptions, getWriteOptions} from "../files";
 
 const {Filesystem} = Plugins;
 
@@ -17,12 +18,12 @@ export class SpeakerService {
 	constructor() { }
 
 	load(): Promise<Speaker[]> {
+
 		if (this.speakers == null) {
-			this.speakers = Filesystem.readFile({
-				path: SpeakerService.SPEAKERS_DB,
-				directory: FilesystemDirectory.Documents,
-				encoding: FilesystemEncoding.UTF8
-			}).then(res => {
+
+			const options = getReadOptions([SpeakerService.SPEAKERS_DB], FilesystemEncoding.UTF8);
+
+			this.speakers = Filesystem.readFile(options).then(res => {
 				const data: SpeakerSerialized[] = JSON.parse(res.data);
 				const speakers: Speaker[] = [];
 				for (let speakerSerialized of data) {
@@ -42,14 +43,21 @@ export class SpeakerService {
 			}, _err => {
 				return [];
 			});
+
 		}
+
 		return this.speakers;
+
 	}
 
 	save(): Promise<void> {
+
 		const speakersPromise = (this.speakers == null) ? Promise.resolve([]) : this.speakers;
+
 		return speakersPromise.then(speakers => {
+
 			const data: SpeakerSerialized[] = [];
+
 			for (let speaker of speakers) {
 				data.push({
 					"name": speaker.name,
@@ -61,13 +69,17 @@ export class SpeakerService {
 					"gender": speaker.gender
 				});
 			}
-			return Filesystem.writeFile({
-				path: SpeakerService.SPEAKERS_DB,
-				directory: FilesystemDirectory.Documents,
-				encoding: FilesystemEncoding.UTF8,
-				data: JSON.stringify(data)
-			}).then(_ => {});
+
+			const options = getWriteOptions(
+				[SpeakerService.SPEAKERS_DB],
+				FilesystemEncoding.UTF8,
+				JSON.stringify(data)
+			);
+
+			return Filesystem.writeFile(options).then(_ => {});
+
 		});
+
 	}
 
 	add(speaker: Speaker): Promise<void> {
