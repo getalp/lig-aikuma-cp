@@ -8,16 +8,16 @@ export function computePath(pathParts: string[]): string {
 
 export function getReadOptions(pathParts: string[], encoding: FilesystemEncoding): FileReadOptions {
 	return {
-		path: this.computePath(pathParts),
-		directory: FilesystemDirectory.ExternalStorage,
+		path: computePath(pathParts),
+		directory: FilesystemDirectory.Documents,
 		encoding: encoding
 	};
 }
 
 export function getWriteOptions(pathParts: string[], encoding: FilesystemEncoding, data: string, recursive: boolean = true): FileWriteOptions {
 	return {
-		path: this.computePath(pathParts),
-		directory: FilesystemDirectory.ExternalStorage,
+		path: computePath(pathParts),
+		directory: FilesystemDirectory.Documents,
 		encoding: encoding,
 		data: data,
 		recursive: recursive

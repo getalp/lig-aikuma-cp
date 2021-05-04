@@ -1,16 +1,13 @@
-import {Component, OnInit} from '@angular/core';
+import {Component} from '@angular/core';
+
 
 @Component({
 	selector: 'page-recording-info',
 	templateUrl: './recording-info.page.html',
 	styleUrls: ['./recording-info.page.scss'],
 })
-export class RecordingInfoPage implements OnInit {
+export class RecordingInfoPage {
 
-	constructor() {
-	}
-
-	ngOnInit() {
-	}
+	constructor() { }
 
 }
