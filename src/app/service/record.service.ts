@@ -3,7 +3,9 @@ import {Injectable} from '@angular/core';
 import {FilesystemEncoding, Plugins} from '@capacitor/core';
 const {Filesystem} = Plugins;
 
-import {getReadOptions, getWriteOptions} from "../files";
+import {Media, MediaObject} from '@ionic-native/media/ngx';
+
+import {getStatOptions, getMkdirOptions} from "../files";
 import {Record} from "../record";
 
 
@@ -12,82 +14,109 @@ import {Record} from "../record";
 })
 export class RecordService {
 
-	private readonly handlers: RecordHandlerFactory<RecordHandler>[] = [
-		new NavigatorRecordHandlerFactory()
-	];
+	private static readonly RECORDS_DIR = "records";
 
-	private handler: RecordHandler = null;
-	private noHandler: boolean = false;
+	//private handler: RecordHandler = null;
+	// private noHandler: boolean = false;
 
 	private record: Record = null;
 
+	private recordObject: MediaObject;
 	private started: boolean = false;
 	private recording: boolean = false;
 
-	constructor() { }
+	constructor(
+		private media: Media
+	) { }
 
-	private checkNoHandler() {
-		if (this.noHandler) {
-			throw "No recording handler was found.";
-		}
+	static formatTwoDigit(num: number): string {
+		return (num < 10 ? "0" : "") + num.toString();
 	}
 
-	private checkSetup() {
-		if (this.handler == null) {
-			throw "The service must be set up before using it.";
+	static getRecordDirName(record: Record): string {
+		const date = record.date;
+		return date.getFullYear() + "-" +
+			this.formatTwoDigit(date.getMonth() + 1) + "-" +
+			this.formatTwoDigit(date.getDate()) + "_" +
+			this.formatTwoDigit(date.getHours()) + "-" +
+			this.formatTwoDigit(date.getMinutes());
+	}
+
+	static async findNewRecordDir(record: Record): Promise<string> {
+
+		const dirRaw = this.getRecordDirName(record);
+		let dir = dirRaw;
+		let dirId = 0;
+
+		for (let i = 0; i < 100; ++i) {
+
+			try {
+				await Filesystem.stat(getStatOptions([this.RECORDS_DIR, dir]));
+				dir = dirRaw + "_" + (++dirId).toString();
+			} catch (e) {
+				await Filesystem.mkdir(getMkdirOptions([this.RECORDS_DIR, dir]));
+				const stat = await Filesystem.stat(getStatOptions([this.RECORDS_DIR, dir]));
+				return stat.uri.substring("file://".length);
+			}
+
 		}
+
+		throw "Too much record directory with the same id.";
+
 	}
 
 	setup(record: Record) {
 
-		this.checkNoHandler();
+		RecordService.findNewRecordDir(record).then(path => {
+			this.recordObject = this.media.create(path + "/raw.wav");
+		});
+
+		/*this.checkNoHandler();
 
 		if (this.handler == null) {
-			for (let handler of this.handlers) {
-				this.handler = handler.try_new();
-				if (this.handler != null) {
-					break;
-				}
-			}
-			if (this.handler == null) {
+
+			if (navigator.mediaDevices != null && navigator.mediaDevices.getUserMedia != null) {
+				this.handler = new NavigatorRecordHandler(navigator.mediaDevices);
+			} else {
 				this.noHandler = true;
 				this.checkNoHandler();
 			}
-		}
+
+		}*/
 
 		this.record = record;
-		this.started = false;
-		this.recording = false;
+		//this.started = false;
+		//this.recording = false;
 
 	}
 
 	resume() {
-		this.checkSetup();
+		/*this.checkSetup();
 		if (!this.recording) {
 			if (this.started) {
 				this.handler.resume();
 			} else {
-				this.handler.start().then();
+				this.handler.start();
 			}
-		}
+		}*/
 	}
 
 	pause() {
-		this.checkSetup();
+		/*this.checkSetup();
 		if (this.recording) {
 			this.handler.pause();
-		}
+		}*/
 	}
 
 	stop() {
-		if (this.recording) {
+		/*if (this.recording) {
 			this.pause();
 		}
 		this.checkSetup();
 		this.handler.stop();
 		this.started = false;
 		this.recording = false;
-		this.record = null;
+		this.record = null;*/
 	}
 
 }
@@ -103,10 +132,6 @@ interface RecordHandler {
 	resume();
 	stop();
 
-}
-
-interface RecordHandlerFactory<T extends RecordHandler> {
-	try_new(): T | null;
 }
 
 enum RecordState {
@@ -187,18 +212,34 @@ class NavigatorRecordHandler implements RecordHandler {
 
 }
 
-class NavigatorRecordHandlerFactory implements RecordHandlerFactory<NavigatorRecordHandler> {
 
-	try_new(): NavigatorRecordHandler | null {
-		console.log("navigator: " + JSON.stringify(navigator.mediaDevices))
-		if (navigator.mediaDevices != null && navigator.mediaDevices.getUserMedia != null) {
-			return new NavigatorRecordHandler(navigator.mediaDevices);
-		} else {
-			return null;
-		}
+// CORDOVA SUPPORT (preferred) //
+
+class CordovaRecordHandler implements RecordHandler {
+
+	private currentTime: number;
+	private startTime: number;
+
+	getState(): RecordState {
+		return undefined;
+	}
+
+	getDuration(): number {
+		return 0;
+	}
+
+	start() {
+
+	}
+
+	pause() {
+
+	}
+
+	resume() {
+	}
+
+	stop() {
 	}
 
 }
-
-
-// CORDOVA SUPPORT (preferred) //

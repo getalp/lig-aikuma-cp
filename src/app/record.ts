@@ -1,6 +1,7 @@
 import {Speaker} from "./speaker";
 import {Language} from "./service/iso-639.service";
 
+
 export class Record {
 
 	public notes: string = "";
@@ -10,9 +11,5 @@ export class Record {
 		public speaker: Speaker,
 		public language: Language
 	) { }
-
-	getFileId(): string {
-		return "";
-	}
 
 }

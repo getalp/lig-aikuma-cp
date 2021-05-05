@@ -16,6 +16,8 @@ import {HomePage} from "./home/home.page";
 import {RecordingInfoPage} from "./recording/recording-info.page";
 import {RecordingClassicPage} from "./recording/recording-classic.page";
 
+import {Media} from '@ionic-native/media/ngx';
+
 
 @NgModule({
 	declarations: [
@@ -40,6 +42,7 @@ import {RecordingClassicPage} from "./recording/recording-classic.page";
         WidgetModule
     ],
 	providers: [
+		Media,
 		{
 			provide: RouteReuseStrategy,
 			useClass: IonicRouteStrategy
