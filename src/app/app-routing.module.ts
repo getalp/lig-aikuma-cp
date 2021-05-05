@@ -3,6 +3,7 @@ import {PreloadAllModules, RouterModule, Routes} from '@angular/router';
 
 import {RecordingInfoPage} from "./recording/recording-info.page";
 import {HomePage} from "./home/home.page";
+import {RecordingClassicPage} from "./recording/recording-classic.page";
 
 
 const routes: Routes = [
@@ -20,10 +21,10 @@ const routes: Routes = [
 		path: 'recording',
 		component: RecordingInfoPage,
 		children: [
-			/*{
+			{
 				path: "classic",
-
-			}*/
+				component: RecordingClassicPage
+			}
 		]
 		// loadChildren: () => import('./recording/recording.module').then(m => m.RecordingPageModule)
 	}

@@ -15,18 +15,18 @@
 		</ion-list-header>
 		<ion-item>
 			<ion-label>Speaker</ion-label>
-			<app-speaker-select></app-speaker-select>
+			<app-speaker-select (speakerChanged)="this.speaker = $event"></app-speaker-select>
 		</ion-item>
 		<ion-item>
 			<ion-label>Recording langage</ion-label>
-			<app-langage-select></app-langage-select>
+			<app-langage-select (langChanged)="this.language = $event"></app-langage-select>
 		</ion-item>
 		<ion-item>
 			<ion-label>Notes</ion-label>
-			<ion-textarea></ion-textarea>
+			<ion-textarea [(ngModel)]="notes"></ion-textarea>
 		</ion-item>
 	</ion-list>
 
-	<ion-button expand="full">Record</ion-button>
+	<ion-button expand="full" (click)="onClickRecord()" [disabled]="this.speaker == null || this.language == null">Record</ion-button>
 
 </ion-content>

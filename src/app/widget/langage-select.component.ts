@@ -13,8 +13,8 @@ export class LangageSelectComponent {
 	private static readonly NO_SELECT_TEXT = "Select";
 
 	@Input() optional: boolean | "" = false;
-	@Output() langageSelected = new EventEmitter<Language>();
-	@Output() langChanged = new EventEmitter<string>();
+	@Output() langCodeChanged = new EventEmitter<string>();
+	@Output() langChanged = new EventEmitter<Language>();
 
 	private langage?: Language;
 	public text: string = LangageSelectComponent.NO_SELECT_TEXT;
@@ -43,7 +43,7 @@ export class LangageSelectComponent {
 	}
 
 	@Input()
-	set lang(langageCode: string) {
+	set langCode(langageCode: string) {
 		this.iso639Service.getLanguage(langageCode).then(lang => {
 			this.setLangage(lang, false);
 		});
@@ -52,9 +52,9 @@ export class LangageSelectComponent {
 	private setLangage(lang: Language, emitChange: boolean) {
 		this.langage = lang;
 		this.text = (lang == null) ? LangageSelectComponent.NO_SELECT_TEXT : this.langage.printName;
-		this.langageSelected.emit(lang);
+		this.langChanged.emit(lang);
 		if (emitChange) {
-			this.langChanged.emit(lang?.code);
+			this.langCodeChanged.emit(lang?.code);
 		}
 	}
 

@@ -14,6 +14,7 @@ import {WidgetModule} from "./widget/module";
 import {FormsModule} from "@angular/forms";
 import {HomePage} from "./home/home.page";
 import {RecordingInfoPage} from "./recording/recording-info.page";
+import {RecordingClassicPage} from "./recording/recording-classic.page";
 
 
 @NgModule({
@@ -23,6 +24,7 @@ import {RecordingInfoPage} from "./recording/recording-info.page";
 		HomePage,
 		// Recording
 		RecordingInfoPage,
+		RecordingClassicPage,
 		// Modals
 		SelectLangageModal,
 		SelectSpeakerModal,

@@ -48,11 +48,11 @@
 			</ion-list-header>
 			<ion-item>
 				<ion-label>Native language</ion-label>
-				<app-langage-select optional [lang]="nativeLanguage" (langChanged)="setNativeLanguage($event)"></app-langage-select>
+				<app-langage-select optional [langCode]="nativeLanguage" (langCodeChanged)="setNativeLanguage($event)"></app-langage-select>
 			</ion-item>
 			<ion-item *ngFor="let _ of otherLanguagesIdx; let index = index;">
 				<ion-label>{{ otherLanguageOrdinals[index] || otherLanguageOrdinals["default"](index) }} language</ion-label>
-				<app-langage-select optional [lang]="otherLanguages[index]" (langChanged)="setOtherLanguage(index, $event)"></app-langage-select>
+				<app-langage-select optional [langCode]="otherLanguages[index]" (langCodeChanged)="setOtherLanguage(index, $event)"></app-langage-select>
 			</ion-item>
 		</ion-list>
 

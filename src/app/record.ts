@@ -11,4 +11,8 @@ export class Record {
 		public language: Language
 	) { }
 
+	getFileId(): string {
+		return "";
+	}
+
 }

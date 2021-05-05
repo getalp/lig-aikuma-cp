@@ -14,7 +14,7 @@ export class SpeakerSelectComponent {
 	private static readonly NO_SELECT_TEXT = "Select";
 
 	@Output()
-	public speakerSelected = new EventEmitter<any>();
+	public speakerChanged = new EventEmitter<any>();
 
 	private speaker?: any;
 	public text: string = SpeakerSelectComponent.NO_SELECT_TEXT;
@@ -41,7 +41,7 @@ export class SpeakerSelectComponent {
 	private setSpeaker(speaker?: Speaker) {
 		this.speaker = speaker;
 		this.text = (speaker == null) ? SpeakerSelectComponent.NO_SELECT_TEXT : speaker.name;
-		this.speakerSelected.emit(speaker);
+		this.speakerChanged.emit(speaker);
 	}
 
 }
