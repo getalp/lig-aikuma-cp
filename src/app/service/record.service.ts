@@ -192,7 +192,7 @@ export class RawRecorder {
 	start() {
 		if (this.currentRecorder == null) {
 			this.currentPath = this.record.getWavRealPath(this.idx++)
-			this.currentRecorder = this.media.create(this.currentPath);
+			this.currentRecorder = this.media.create(this.currentPath); // TODO: Use URI (file://)
 			this.currentRecorder.startRecord();
 		}
 	}
