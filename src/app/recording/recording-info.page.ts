@@ -29,11 +29,7 @@ export class RecordingInfoPage {
 
 		console.log(`dirPath: ${record.dirPath}, basePath: ${record.basePath}, dirRealPath: ${record.dirRealPath}, baseRealPath: ${record.baseRealPath}`);
 
-		/*const record = new Record(this.speaker, this.language);
-		record.notes = this.notes;
-		this.recordService.setup(record);
-
-		this.router.navigate(["recording", "classic"]).then();*/
+		await this.router.navigate(["recording", "classic", record.dirName]);
 
 	}
 

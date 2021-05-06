@@ -18,14 +18,12 @@ const routes: Routes = [
 		// loadChildren: () => import('./home/home.module').then(m => m.HomePageModule)
 	},
 	{
+		path: 'recording/classic/:recordDirName',
+		component: RecordingClassicPage
+	},
+	{
 		path: 'recording',
-		component: RecordingInfoPage,
-		children: [
-			{
-				path: "classic",
-				component: RecordingClassicPage
-			}
-		]
+		component: RecordingInfoPage
 		// loadChildren: () => import('./recording/recording.module').then(m => m.RecordingPageModule)
 	}
 ];

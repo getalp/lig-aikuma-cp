@@ -1,12 +1,13 @@
 import {Injectable} from '@angular/core';
 
-import {FilesystemEncoding, Plugins} from '@capacitor/core';
+import {FilesystemEncoding, Plugins, ReaddirResult, StatResult} from '@capacitor/core';
+const {Filesystem} = Plugins;
+
 import {Media, MediaObject} from '@ionic-native/media/ngx';
 
 import {computePath, getCommonOptions} from "../files";
 import {deserializeRecord, Record, RecordType, serializeRecord} from "../record";
 
-const {Filesystem} = Plugins;
 
 
 @Injectable({
@@ -34,8 +35,16 @@ export class RecordService {
 
 		this.records = {};
 
-		const dirsRes = await Filesystem.readdir(getCommonOptions([RecordService.RECORDS_DIR]));
-		const dirsStat = await Filesystem.stat(getCommonOptions([RecordService.RECORDS_DIR]));
+		let dirsRes: ReaddirResult;
+		let dirsStat: StatResult;
+
+		try {
+			dirsRes = await Filesystem.readdir(getCommonOptions([RecordService.RECORDS_DIR]));
+			dirsStat = await Filesystem.stat(getCommonOptions([RecordService.RECORDS_DIR]));
+		} catch (e) {
+			console.warn("Can't load records because directory does not exists.");
+			return;
+		}
 
 		for (let recordDir of dirsRes.files) {
 
@@ -52,6 +61,7 @@ export class RecordService {
 				});
 
 				const record = deserializeRecord(null, JSON.parse(recordRes.data));
+				record.dirName = recordDir;
 				record.dirPath = computePath([RecordService.RECORDS_DIR, recordDir]);
 				record.basePath = basePath;
 				record.dirRealPath = RecordService.getRealPathFromUri(dirsStat.uri) + "/" + recordDir;
@@ -103,6 +113,7 @@ export class RecordService {
 
 				const res = await Filesystem.getUri(getCommonOptions(dirPath));
 
+				record.dirName = dir;
 				record.dirPath = dirPath;
 				record.basePath = computePath([RecordService.RECORDS_DIR, dir, "raw"]);
 				record.dirRealPath = RecordService.getRealPathFromUri(res.uri);
@@ -127,6 +138,16 @@ export class RecordService {
 
 	}
 
+	async getRecord(dir: string): Promise<Record> {
+		await this.ensureLoaded();
+		const record = this.records[dir];
+		if (record == null) {
+			throw `Invalid record directory '${dir}'.`;
+		} else {
+			return record;
+		}
+	}
+
 	static formatTwoDigit(num: number): string {
 		return (num < 10 ? "0" : "") + num.toString();
 	}
@@ -143,32 +164,6 @@ export class RecordService {
 	static getRealPathFromUri(uri: string): string {
 		return uri.substring("file://".length);
 	}
-
-	/*static async findNewRecordDir(record: Record): Promise<string> {
-
-		const dirRaw = this.getRecordDirName(record);
-		let dir = dirRaw;
-		let dirId = 0;
-
-		for (let i = 0; i < 100; ++i) {
-
-			try {
-				await Filesystem.stat(getCommonOptions([this.RECORDS_DIR, dir]));
-				dir = dirRaw + "_" + (++dirId).toString();
-			} catch (e) {
-				await Filesystem.mkdir({
-					...getCommonOptions([this.RECORDS_DIR, dir]),
-					recursive: true
-				});
-				const res = await Filesystem.stat(getCommonOptions([this.RECORDS_DIR, dir]));
-				return res.uri.substring("file://".length);
-			}
-
-		}
-
-		throw "Too much record directory with the same id.";
-
-	}*/
 
 
 

@@ -6,6 +6,7 @@ export class Record {
 	public notes: string = "";
 	public date: Date = new Date();
 
+	public dirName: string = null;
 	public dirPath: string = null;
 	public basePath: string = null;
 	public dirRealPath: string = null;
