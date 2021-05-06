@@ -9,7 +9,6 @@ import {computePath, getCommonOptions} from "../files";
 import {deserializeRecord, Record, RecordType, serializeRecord} from "../record";
 
 
-
 @Injectable({
 	providedIn: 'root'
 })
@@ -53,7 +52,8 @@ export class RecordService {
 				const basePath = computePath([RecordService.RECORDS_DIR, recordDir, "raw"]);
 
 				// Ensure that the audio is present before decoding metadata.
-				await Filesystem.stat(getCommonOptions(basePath + ".wav"));
+				// FIXME: No longer checking for audio file.
+				// await Filesystem.stat(getCommonOptions(basePath + ".wav"));
 
 				const recordRes = await Filesystem.readFile({
 					...getCommonOptions(basePath + ".json"),
@@ -70,7 +70,7 @@ export class RecordService {
 				this.records[recordDir] = record;
 
 			} catch (e) {
-				console.warn("Invalid record directory: " + recordDir + " (it must contains valid raw.json and raw.wav).", e);
+				console.warn("Invalid record directory: " + recordDir + " (it must contains valid raw.json).", e);
 			}
 
 		}
@@ -148,6 +148,14 @@ export class RecordService {
 		}
 	}
 
+	async beginRawRecord(record: Record): Promise<RawRecorder> {
+		if (record.baseRealPath == null) {
+			throw "The record must be linked and initialized by the RecordService before beginning record.";
+		} else {
+			return new RawRecorder(record, this.media);
+		}
+	}
+
 	static formatTwoDigit(num: number): string {
 		return (num < 10 ? "0" : "") + num.toString();
 	}
@@ -165,77 +173,40 @@ export class RecordService {
 		return uri.substring("file://".length);
 	}
 
+}
 
 
+export class RawRecorder {
 
+	private currentRecorder: MediaObject;
+	private currentPath: string;
 
+	private idx: number = 0;
+	private files: string[] = [];
 
+	constructor(
+		private record: Record,
+		private media: Media
+	) { }
 
-
-
-
-
-
-
-
-
-
-
-	setup(record: Record) {
-
-		/*RecordService.findNewRecordDir(record).then(path => {
-			this.recordObject = this.media.create(path + "/raw.wav");
-		});*/
-
-		/*this.checkNoHandler();
-
-		if (this.handler == null) {
-
-			if (navigator.mediaDevices != null && navigator.mediaDevices.getUserMedia != null) {
-				this.handler = new NavigatorRecordHandler(navigator.mediaDevices);
-			} else {
-				this.noHandler = true;
-				this.checkNoHandler();
-			}
-
-		}*/
-
-		//this.record = record;
-		//this.started = false;
-		//this.recording = false;
-
-	}
-
-	resume() {
-		/*this.checkSetup();
-		if (!this.recording) {
-			if (this.started) {
-				this.handler.resume();
-			} else {
-				this.handler.start();
-			}
-		}*/
-	}
-
-	pause() {
-		/*this.checkSetup();
-		if (this.recording) {
-			this.handler.pause();
-		}*/
+	start() {
+		if (this.currentRecorder == null) {
+			this.currentPath = this.record.getWavRealPath(this.idx++)
+			this.currentRecorder = this.media.create(this.currentPath);
+			this.currentRecorder.startRecord();
+		}
 	}
 
 	stop() {
-		/*if (this.recording) {
-			this.pause();
+		if (this.currentRecorder != null) {
+			this.currentRecorder.stop();
+			this.currentRecorder = null;
+			this.files.push(this.currentPath);
 		}
-		this.checkSetup();
-		this.handler.stop();
-		this.started = false;
-		this.recording = false;
-		this.record = null;*/
 	}
 
 }
+
 
 
 /*interface RecordHandler {

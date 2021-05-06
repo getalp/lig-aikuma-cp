@@ -31,8 +31,8 @@ export class Record {
 		return this.basePath + ".wav";
 	}
 
-	getWavRealPath(): string {
-		return this.baseRealPath + ".wav";
+	getWavRealPath(part?: number): string {
+		return this.baseRealPath + (part != null ? "." + part : "") + ".wav";
 	}
 
 }

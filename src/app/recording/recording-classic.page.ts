@@ -1,7 +1,7 @@
 import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute} from "@angular/router";
 
-import {RecordService} from "../service/record.service";
+import {RawRecorder, RecordService} from "../service/record.service";
 import {Record} from "../record";
 
 
@@ -13,6 +13,7 @@ import {Record} from "../record";
 export class RecordingClassicPage implements OnInit {
 
 	private record: Record = null;
+	private rawRecorder: RawRecorder = null;
 
 	constructor(
 		private route: ActivatedRoute,
@@ -22,21 +23,21 @@ export class RecordingClassicPage implements OnInit {
 	}
 
 	ngOnInit() {
+		this.init().then();
+	}
 
+	private async init() {
 		const recordDirName = this.route.snapshot.paramMap.get("recordDirName");
-		this.recordService.getRecord(recordDirName).then(record => {
-			this.record = record;
-			console.log("record: " + JSON.stringify(record));
-		});
-
+		const record = await this.recordService.getRecord(recordDirName);
+		this.rawRecorder = await this.recordService.beginRawRecord(record);
 	}
 
-	resume() {
-		this.recordService.resume();
+	start() {
+		this.rawRecorder.start();
 	}
 
-	pause() {
-		this.recordService.pause();
+	stop() {
+		this.rawRecorder.stop();
 	}
 
 }
