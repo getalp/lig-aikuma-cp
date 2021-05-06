@@ -28,7 +28,7 @@ export class CreateSpeakerModal {
 	public otherLanguagesIdx: void[] = [null];
 	public otherLanguages: string[] = [null];
 
-	public editing: boolean = false;
+	public editingSpeakerUid: string = null;
 
 	constructor(
 		private speakerService: SpeakerService,
@@ -36,9 +36,9 @@ export class CreateSpeakerModal {
 	) { }
 
 	@Input()
-	set editSpeaker(speaker: Speaker) {
-		if (speaker != null) {
-			this.editing = true;
+	set editSpeaker(speakerUid: string) {
+		this.speakerService.get(speakerUid).then(speaker => {
+			this.editingSpeakerUid = speakerUid;
 			this.name = speaker.name;
 			this.yearOfBirth = (speaker.yearOfBirth == null) ? "" : speaker.yearOfBirth.toString();
 			this.gender = speaker.gender;
@@ -48,10 +48,10 @@ export class CreateSpeakerModal {
 			this.otherLanguages = speaker.otherLanguages.slice();
 			this.otherLanguagesIdx = new Array(this.otherLanguages.length);
 			this.addOtherLanguage();
-		} else {
-			this.editing = false;
+		}).catch(_err => {
+			this.editingSpeakerUid = null;
 			this.resetLanguage();
-		}
+		});
 	}
 
 	private resetLanguage() {
@@ -65,11 +65,7 @@ export class CreateSpeakerModal {
 	}
 
 	setNativeLanguage(langCode: string) {
-		//const wasNull = (this.nativeLanguage == null);
 		this.nativeLanguage = langCode;
-		/*if (wasNull && langCode != null && this.otherLanguagesIdx.length === 0) {
-			this.addOtherLanguage();
-		}*/
 	}
 
 	setOtherLanguage(idx: number, langCode: string) {
@@ -102,40 +98,49 @@ export class CreateSpeakerModal {
 			return;
 		}
 
-		const speaker = new Speaker(this.name);
-		speaker.yearOfBirth = yearOfBirth;
-		speaker.gender = this.gender;
-		speaker.regionOfOrigin = this.regionOfOrigin;
-		speaker.notes = this.notes;
-		speaker.nativeLanguage = this.nativeLanguage;
-		speaker.otherLanguages = [];
+		let speakerPromise: Promise<Speaker>;
+		const editing = (this.editingSpeakerUid != null);
 
-		for (let otherLang of this.otherLanguages) {
-			if (otherLang != null) {
-				speaker.otherLanguages.push(otherLang);
-			}
-		}
-
-		if (this.editing) {
-			this.speakerService.save().then(() => {
-				Toast.show({
-					text: "Successfully edited speaker " + speaker.name
-				}).then();
-				this.modalCtl.dismiss({
-					speaker: speaker,
-					edited: true
-				}).then();
+		if (editing) {
+			speakerPromise = this.speakerService.get(this.editingSpeakerUid).then(speaker => {
+				speaker.name = this.name;
+				return speaker;
 			});
 		} else {
-			this.speakerService.add(speaker).then(() => {
-				Toast.show({
-					text: "Successfully created speaker " + speaker.name
-				}).then();
-				this.modalCtl.dismiss({
-					speaker: speaker
-				}).then();
-			});
+			speakerPromise = this.speakerService.alloc(this.name);
 		}
+
+		speakerPromise.then(speaker => {
+
+			speaker.yearOfBirth = yearOfBirth;
+			speaker.gender = this.gender;
+			speaker.regionOfOrigin = this.regionOfOrigin;
+			speaker.notes = this.notes;
+			speaker.nativeLanguage = this.nativeLanguage;
+			speaker.otherLanguages = [];
+
+			for (let otherLang of this.otherLanguages) {
+				if (otherLang != null) {
+					speaker.otherLanguages.push(otherLang);
+				}
+			}
+
+			this.speakerService.save().then(() => {
+
+				Toast.show({
+					text: "Successfully " + (editing ? "edited" : "created") + " speaker " + speaker.name
+				}).then();
+
+				this.modalCtl.dismiss({
+					speaker: speaker,
+					edited: editing
+				}).then();
+
+			});
+
+		}).catch(err => {
+			Toast.show({text: "Failed to edit or create speaker: " + err}).then();
+		});
 
 	}
 

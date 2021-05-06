@@ -1,10 +1,10 @@
 import {Injectable} from '@angular/core';
 
 import {FilesystemEncoding, Plugins} from '@capacitor/core';
+const {Filesystem} = Plugins;
+
 import {getReadOptions, getWriteOptions} from "../files";
 import {Gender, Speaker} from "../speaker";
-
-const {Filesystem} = Plugins;
 
 
 @Injectable({
@@ -14,21 +14,21 @@ export class SpeakerService {
 
 	private static readonly SPEAKERS_DB = "speakers.json";
 
-	private speakers?: Promise<Speaker[]>;
+	private speakers?: Promise<{ [key: string]: Speaker }>;
 
 	constructor() { }
 
-	load(): Promise<Speaker[]> {
+	load(): Promise<{ [key: string]: Speaker }> {
 
 		if (this.speakers == null) {
 
 			const options = getReadOptions([SpeakerService.SPEAKERS_DB], FilesystemEncoding.UTF8);
 
 			this.speakers = Filesystem.readFile(options).then(res => {
-				const data: SpeakerSerialized[] = JSON.parse(res.data);
-				const speakers: Speaker[] = [];
-				for (let speakerSerialized of data) {
-					const speaker = new Speaker(speakerSerialized["name"]);
+				const data: { [key: string]: SpeakerSerialized } = JSON.parse(res.data);
+				const speakers: { [key: string]: Speaker } = {};
+				for (let [speakerUid, speakerSerialized] of Object.entries(data)) {
+					const speaker = new Speaker(speakerUid, speakerSerialized["name"]);
 					speaker.nativeLanguage = speakerSerialized["native_language"];
 					speaker.otherLanguages = speakerSerialized["other_languages"];
 					speaker.regionOfOrigin = speakerSerialized["region_of_origin"];
@@ -38,11 +38,11 @@ export class SpeakerService {
 					if (speaker.gender == null) {
 						speaker.gender = Gender.Unknown;
 					}
-					speakers.push(speaker);
+					speakers[speakerUid] = speaker;
 				}
 				return speakers;
 			}, _err => {
-				return [];
+				return {};
 			});
 
 		}
@@ -53,14 +53,14 @@ export class SpeakerService {
 
 	save(): Promise<void> {
 
-		const speakersPromise = (this.speakers == null) ? Promise.resolve([]) : this.speakers;
+		const speakersPromise = (this.speakers == null) ? Promise.resolve({}) : this.speakers;
 
 		return speakersPromise.then(speakers => {
 
-			const data: SpeakerSerialized[] = [];
+			const data: { [key: string]: SpeakerSerialized } = {};
 
-			for (let speaker of speakers) {
-				data.push({
+			for (let [speakerUid, speaker] of Object.entries(speakers)) {
+				data[speakerUid] = {
 					"name": speaker.name,
 					"native_language": speaker.nativeLanguage,
 					"other_languages": speaker.otherLanguages,
@@ -68,7 +68,7 @@ export class SpeakerService {
 					"notes": speaker.notes,
 					"year_of_birth": speaker.yearOfBirth,
 					"gender": speaker.gender
-				});
+				};
 			}
 
 			const options = getWriteOptions(
@@ -83,10 +83,24 @@ export class SpeakerService {
 
 	}
 
-	add(speaker: Speaker): Promise<void> {
+	alloc(name: string): Promise<Speaker> {
 		return this.load()
-			.then(speakers => speakers.push(speaker))
-			.then(_ => this.save());
+			.then(speakers => {
+				let uid;
+				do {
+					uid = Math.floor(Math.random() * 10000000).toString();
+				} while (uid in speakers);
+				const speaker = new Speaker(uid, name);
+				speakers[uid] = speaker;
+				return speaker;
+			});
+	}
+
+	get(uid: string): Promise<Speaker> {
+		return this.load().then(speakers => {
+			const speaker = speakers[uid];
+			return speaker == null ? Promise.reject("Unknown speaker.") : Promise.resolve(speaker);
+		});
 	}
 
 }

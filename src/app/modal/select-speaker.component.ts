@@ -47,10 +47,11 @@ export class SelectSpeakerModal implements OnInit {
 			return r.present().then(() => {
 				r.onWillDismiss().then(value => {
 					if (value.data != null) {
-						speaker.apply(value.data.speaker);
+						this.load();
+						/*speaker.apply(value.data.speaker);
 						this.speakerService.save().then(() => {
 							this.load();
-						});
+						});*/
 					}
 				});
 			});
@@ -79,7 +80,7 @@ export class SelectSpeakerModal implements OnInit {
 	private load() {
 		this.speakerService.load().then(speakers => {
 			this.speakers = [];
-			for (let speaker of speakers) {
+			for (let speaker of Object.values(speakers)) {
 				if (this.filterSpeaker(speaker)) {
 					this.addSpeaker(speaker);
 				}

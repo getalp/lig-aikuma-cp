@@ -13,8 +13,7 @@ export class Speaker {
 	public yearOfBirth: number;
 	public gender: Gender = Gender.Unknown;
 
-	constructor(public name: string) {
-	}
+	constructor(public uid: string, public name: string) { }
 
 	public apply(other: Speaker) {
 		this.name = other.name;
