@@ -41,7 +41,7 @@ export class SelectSpeakerModal implements OnInit {
 		this.modalCtl.create({
 			component: CreateSpeakerModal,
 			componentProps: {
-				"editSpeaker": speaker
+				"editSpeakerUid": speaker.uid
 			}
 		}).then(r => {
 			return r.present().then(() => {

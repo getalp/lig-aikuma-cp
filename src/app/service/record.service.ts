@@ -4,7 +4,7 @@ import {FilesystemEncoding, Plugins} from '@capacitor/core';
 import {Media, MediaObject} from '@ionic-native/media/ngx';
 
 import {computePath, getCommonOptions} from "../files";
-import {deserializeRecord, Record, RecordType} from "../record";
+import {deserializeRecord, Record, RecordType, serializeRecord} from "../record";
 
 const {Filesystem} = Plugins;
 
@@ -20,7 +20,7 @@ export class RecordService {
 	// private noHandler: boolean = false;
 
 	// private record: Record = null;
-	private records: { [key: string]: Record } = {};
+	private records: { [key: string]: Record } = null;
 
 	private recordObject: MediaObject;
 	private started: boolean = false;
@@ -53,22 +53,33 @@ export class RecordService {
 
 				const record = deserializeRecord(null, JSON.parse(recordRes.data));
 				record.dirPath = computePath([RecordService.RECORDS_DIR, recordDir]);
-				record.basePath = computePath([RecordService.RECORDS_DIR, recordDir, "raw"]);
-				record.dirRealPath = dirsStat.uri.substring("file://".length) + "/" + recordDir;
+				record.basePath = basePath;
+				record.dirRealPath = RecordService.getRealPathFromUri(dirsStat.uri) + "/" + recordDir;
+				record.baseRealPath = record.dirRealPath + "/raw";
 
 				this.records[recordDir] = record;
 
-			} catch (ignored) { }
+			} catch (e) {
+				console.warn("Invalid record directory: " + recordDir + " (it must contains valid raw.json and raw.wav).", e);
+			}
 
 		}
 
 	}
 
-	async newRawRecord(record: Record): Promise<void> {
+	async ensureLoaded() {
+		if (this.records == null) {
+			await this.load();
+		}
+	}
+
+	async newRawRecord(record: Record) {
 
 		if (record.type !== RecordType.Raw || record.parent != null) {
 			throw "You can only use this function for raw records, without parent.";
 		}
+
+		await this.ensureLoaded();
 
 		const dirRaw = RecordService.getRecordDirName(record);
 		let dir = dirRaw;
@@ -90,13 +101,23 @@ export class RecordService {
 					recursive: true
 				});
 
-				const res = await Filesystem.stat(getCommonOptions(dirPath));
+				const res = await Filesystem.getUri(getCommonOptions(dirPath));
 
 				record.dirPath = dirPath;
 				record.basePath = computePath([RecordService.RECORDS_DIR, dir, "raw"]);
-				record.dirRealPath = res.uri.substring("file://".length);
+				record.dirRealPath = RecordService.getRealPathFromUri(res.uri);
+				record.baseRealPath = record.dirRealPath + "/raw";
+
+				await Filesystem.writeFile({
+					...getCommonOptions(record.basePath + ".json"),
+					encoding: FilesystemEncoding.UTF8,
+					data: JSON.stringify(serializeRecord(record)),
+					recursive: true
+				});
 
 				this.records[dir] = record;
+
+				return;
 
 			}
 
@@ -105,10 +126,6 @@ export class RecordService {
 		throw "Too much record directory with the same id.";
 
 	}
-
-
-
-
 
 	static formatTwoDigit(num: number): string {
 		return (num < 10 ? "0" : "") + num.toString();
@@ -121,6 +138,10 @@ export class RecordService {
 			this.formatTwoDigit(date.getDate()) + "_" +
 			this.formatTwoDigit(date.getHours()) + "-" +
 			this.formatTwoDigit(date.getMinutes());
+	}
+
+	static getRealPathFromUri(uri: string): string {
+		return uri.substring("file://".length);
 	}
 
 	/*static async findNewRecordDir(record: Record): Promise<string> {

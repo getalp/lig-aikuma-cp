@@ -2,7 +2,7 @@
 
 	<ion-header translucent>
 		<ion-toolbar>
-			<ion-title>{{ editing ? "Edit" : "Add" }} a speaker</ion-title>
+			<ion-title>{{ editingSpeakerUid != null ? "Edit" : "Add" }} a speaker</ion-title>
 		</ion-toolbar>
 	</ion-header>
 
@@ -56,7 +56,7 @@
 			</ion-item>
 		</ion-list>
 
-		<ion-button expand="full" (click)="onClickSave()" [disabled]="name.length === 0">{{ editing ? "Save" : "Add" }}</ion-button>
+		<ion-button expand="full" (click)="onClickSave()" [disabled]="name.length === 0">{{ editingSpeakerUid != null ? "Save" : "Add" }}</ion-button>
 
 	</ion-content>
 

@@ -9,6 +9,7 @@ export class Record {
 	public dirPath: string = null;
 	public basePath: string = null;
 	public dirRealPath: string = null;
+	public baseRealPath: string = null;
 
 	constructor(
 		public parent: Record,
@@ -16,6 +17,22 @@ export class Record {
 		public language: string,
 		public type: RecordType
 	) { }
+
+	static newRaw(speaker: Speaker, language: string): Record {
+		return new Record(null, speaker, language, RecordType.Raw);
+	}
+
+	getMetaPath(): string {
+		return this.basePath + ".json";
+	}
+
+	getWavPath(): string {
+		return this.basePath + ".wav";
+	}
+
+	getWavRealPath(): string {
+		return this.baseRealPath + ".wav";
+	}
 
 }
 

@@ -1,7 +1,6 @@
 import {Component} from '@angular/core';
 import {RecordService} from "../service/record.service";
 import {Speaker} from "../speaker";
-import {Language} from "../service/iso-639.service";
 import {Record} from "../record";
 import {Router} from "@angular/router";
 
@@ -14,7 +13,7 @@ import {Router} from "@angular/router";
 export class RecordingInfoPage {
 
 	public speaker: Speaker;
-	public language: Language;
+	public language: string;
 	public notes: string;
 
 	constructor(
@@ -22,9 +21,13 @@ export class RecordingInfoPage {
 		private recordService: RecordService
 	) { }
 
-	onClickRecord() {
+	async onClickRecord() {
 
-		this.recordService.load().then();
+		const record = Record.newRaw(this.speaker, this.language);
+		record.notes = this.notes;
+		await this.recordService.newRawRecord(record);
+
+		console.log(`dirPath: ${record.dirPath}, basePath: ${record.basePath}, dirRealPath: ${record.dirRealPath}, baseRealPath: ${record.baseRealPath}`);
 
 		/*const record = new Record(this.speaker, this.language);
 		record.notes = this.notes;

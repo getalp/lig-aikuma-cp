@@ -36,7 +36,7 @@ export class CreateSpeakerModal {
 	) { }
 
 	@Input()
-	set editSpeaker(speakerUid: string) {
+	set editSpeakerUid(speakerUid: string) {
 		this.speakerService.get(speakerUid).then(speaker => {
 			this.editingSpeakerUid = speakerUid;
 			this.name = speaker.name;
