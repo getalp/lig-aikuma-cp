@@ -1,12 +1,12 @@
 import {Injectable} from '@angular/core';
 
 import {FilesystemEncoding, Plugins} from '@capacitor/core';
-const {Filesystem} = Plugins;
-
 import {Media, MediaObject} from '@ionic-native/media/ngx';
 
-import {getStatOptions, getMkdirOptions} from "../files";
-import {Record} from "../record";
+import {computePath, getCommonOptions} from "../files";
+import {deserializeRecord, Record, RecordType} from "../record";
+
+const {Filesystem} = Plugins;
 
 
 @Injectable({
@@ -16,10 +16,11 @@ export class RecordService {
 
 	private static readonly RECORDS_DIR = "records";
 
-	//private handler: RecordHandler = null;
+	// private handler: RecordHandler = null;
 	// private noHandler: boolean = false;
 
-	private record: Record = null;
+	// private record: Record = null;
+	private records: { [key: string]: Record } = {};
 
 	private recordObject: MediaObject;
 	private started: boolean = false;
@@ -28,6 +29,86 @@ export class RecordService {
 	constructor(
 		private media: Media
 	) { }
+
+	async load() {
+
+		this.records = {};
+
+		const dirsRes = await Filesystem.readdir(getCommonOptions([RecordService.RECORDS_DIR]));
+		const dirsStat = await Filesystem.stat(getCommonOptions([RecordService.RECORDS_DIR]));
+
+		for (let recordDir of dirsRes.files) {
+
+			try {
+
+				const basePath = computePath([RecordService.RECORDS_DIR, recordDir, "raw"]);
+
+				// Ensure that the audio is present before decoding metadata.
+				await Filesystem.stat(getCommonOptions(basePath + ".wav"));
+
+				const recordRes = await Filesystem.readFile({
+					...getCommonOptions(basePath + ".json"),
+					encoding: FilesystemEncoding.UTF8
+				});
+
+				const record = deserializeRecord(null, JSON.parse(recordRes.data));
+				record.dirPath = computePath([RecordService.RECORDS_DIR, recordDir]);
+				record.basePath = computePath([RecordService.RECORDS_DIR, recordDir, "raw"]);
+				record.dirRealPath = dirsStat.uri.substring("file://".length) + "/" + recordDir;
+
+				this.records[recordDir] = record;
+
+			} catch (ignored) { }
+
+		}
+
+	}
+
+	async newRawRecord(record: Record): Promise<void> {
+
+		if (record.type !== RecordType.Raw || record.parent != null) {
+			throw "You can only use this function for raw records, without parent.";
+		}
+
+		const dirRaw = RecordService.getRecordDirName(record);
+		let dir = dirRaw;
+		let dirId = 0;
+		let dirPath = computePath([RecordService.RECORDS_DIR, dir]);
+
+		for (let i = 0; i < 100; ++i) {
+
+			try {
+
+				await Filesystem.stat(getCommonOptions(dirPath));
+				dir = dirRaw + "_" + (++dirId).toString();
+				dirPath = computePath([RecordService.RECORDS_DIR, dir]);
+
+			} catch (e) {
+
+				await Filesystem.mkdir({
+					...getCommonOptions(dirPath),
+					recursive: true
+				});
+
+				const res = await Filesystem.stat(getCommonOptions(dirPath));
+
+				record.dirPath = dirPath;
+				record.basePath = computePath([RecordService.RECORDS_DIR, dir, "raw"]);
+				record.dirRealPath = res.uri.substring("file://".length);
+
+				this.records[dir] = record;
+
+			}
+
+		}
+
+		throw "Too much record directory with the same id.";
+
+	}
+
+
+
+
 
 	static formatTwoDigit(num: number): string {
 		return (num < 10 ? "0" : "") + num.toString();
@@ -42,7 +123,7 @@ export class RecordService {
 			this.formatTwoDigit(date.getMinutes());
 	}
 
-	static async findNewRecordDir(record: Record): Promise<string> {
+	/*static async findNewRecordDir(record: Record): Promise<string> {
 
 		const dirRaw = this.getRecordDirName(record);
 		let dir = dirRaw;
@@ -51,25 +132,44 @@ export class RecordService {
 		for (let i = 0; i < 100; ++i) {
 
 			try {
-				await Filesystem.stat(getStatOptions([this.RECORDS_DIR, dir]));
+				await Filesystem.stat(getCommonOptions([this.RECORDS_DIR, dir]));
 				dir = dirRaw + "_" + (++dirId).toString();
 			} catch (e) {
-				await Filesystem.mkdir(getMkdirOptions([this.RECORDS_DIR, dir]));
-				const stat = await Filesystem.stat(getStatOptions([this.RECORDS_DIR, dir]));
-				return stat.uri.substring("file://".length);
+				await Filesystem.mkdir({
+					...getCommonOptions([this.RECORDS_DIR, dir]),
+					recursive: true
+				});
+				const res = await Filesystem.stat(getCommonOptions([this.RECORDS_DIR, dir]));
+				return res.uri.substring("file://".length);
 			}
 
 		}
 
 		throw "Too much record directory with the same id.";
 
-	}
+	}*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	setup(record: Record) {
 
-		RecordService.findNewRecordDir(record).then(path => {
+		/*RecordService.findNewRecordDir(record).then(path => {
 			this.recordObject = this.media.create(path + "/raw.wav");
-		});
+		});*/
 
 		/*this.checkNoHandler();
 
@@ -84,7 +184,7 @@ export class RecordService {
 
 		}*/
 
-		this.record = record;
+		//this.record = record;
 		//this.started = false;
 		//this.recording = false;
 
@@ -122,7 +222,7 @@ export class RecordService {
 }
 
 
-interface RecordHandler {
+/*interface RecordHandler {
 
 	getState(): RecordState;
 	getDuration(): number;
@@ -243,3 +343,7 @@ class CordovaRecordHandler implements RecordHandler {
 	}
 
 }
+*/
+
+
+

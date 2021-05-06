@@ -3,8 +3,9 @@ import {Injectable} from '@angular/core';
 import {FilesystemEncoding, Plugins} from '@capacitor/core';
 const {Filesystem} = Plugins;
 
-import {getReadOptions, getWriteOptions} from "../files";
-import {Gender, Speaker} from "../speaker";
+import {SpeakerSerialized, Speaker, deserializeSpeaker, serializeSpeaker} from "../speaker";
+import {getCommonOptions} from "../files";
+
 
 
 @Injectable({
@@ -22,23 +23,14 @@ export class SpeakerService {
 
 		if (this.speakers == null) {
 
-			const options = getReadOptions([SpeakerService.SPEAKERS_DB], FilesystemEncoding.UTF8);
-
-			this.speakers = Filesystem.readFile(options).then(res => {
+			this.speakers = Filesystem.readFile({
+				...getCommonOptions([SpeakerService.SPEAKERS_DB]),
+				encoding: FilesystemEncoding.UTF8
+			}).then(res => {
 				const data: { [key: string]: SpeakerSerialized } = JSON.parse(res.data);
 				const speakers: { [key: string]: Speaker } = {};
 				for (let [speakerUid, speakerSerialized] of Object.entries(data)) {
-					const speaker = new Speaker(speakerUid, speakerSerialized["name"]);
-					speaker.nativeLanguage = speakerSerialized["native_language"];
-					speaker.otherLanguages = speakerSerialized["other_languages"];
-					speaker.regionOfOrigin = speakerSerialized["region_of_origin"];
-					speaker.notes = speakerSerialized["notes"];
-					speaker.yearOfBirth = speakerSerialized["year_of_birth"];
-					speaker.gender = <Gender>speakerSerialized["gender"];
-					if (speaker.gender == null) {
-						speaker.gender = Gender.Unknown;
-					}
-					speakers[speakerUid] = speaker;
+					speakers[speakerUid] = deserializeSpeaker(speakerUid, speakerSerialized);
 				}
 				return speakers;
 			}, _err => {
@@ -60,24 +52,15 @@ export class SpeakerService {
 			const data: { [key: string]: SpeakerSerialized } = {};
 
 			for (let [speakerUid, speaker] of Object.entries(speakers)) {
-				data[speakerUid] = {
-					"name": speaker.name,
-					"native_language": speaker.nativeLanguage,
-					"other_languages": speaker.otherLanguages,
-					"region_of_origin": speaker.regionOfOrigin,
-					"notes": speaker.notes,
-					"year_of_birth": speaker.yearOfBirth,
-					"gender": speaker.gender
-				};
+				data[speakerUid] = serializeSpeaker(speaker);
 			}
 
-			const options = getWriteOptions(
-				[SpeakerService.SPEAKERS_DB],
-				FilesystemEncoding.UTF8,
-				JSON.stringify(data)
-			);
-
-			return Filesystem.writeFile(options).then(_ => {});
+			return Filesystem.writeFile({
+				...getCommonOptions([SpeakerService.SPEAKERS_DB]),
+				encoding: FilesystemEncoding.UTF8,
+				data: JSON.stringify(data),
+				recursive: true
+			}).then(_ => {});
 
 		});
 
@@ -103,15 +86,4 @@ export class SpeakerService {
 		});
 	}
 
-}
-
-
-interface SpeakerSerialized {
-	"name": string;
-	"native_language": string;
-	"other_languages": string[];
-	"region_of_origin": string;
-	"notes": string;
-	"year_of_birth": number;
-	"gender": string
 }

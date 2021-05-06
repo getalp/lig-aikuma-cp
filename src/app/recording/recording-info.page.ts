@@ -24,11 +24,13 @@ export class RecordingInfoPage {
 
 	onClickRecord() {
 
-		const record = new Record(this.speaker, this.language);
+		this.recordService.load().then();
+
+		/*const record = new Record(this.speaker, this.language);
 		record.notes = this.notes;
 		this.recordService.setup(record);
 
-		this.router.navigate(["recording", "classic"]).then();
+		this.router.navigate(["recording", "classic"]).then();*/
 
 	}
 
