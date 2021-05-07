@@ -3,7 +3,7 @@ import {Injectable} from '@angular/core';
 import {FilesystemEncoding, Plugins, ReaddirResult, StatResult} from '@capacitor/core';
 const {Filesystem} = Plugins;
 
-import {Media, MediaObject} from '@ionic-native/media/ngx';
+// import {Media, MediaObject} from '@ionic-native/media/ngx';
 
 import {computePath, getCommonOptions} from "../files";
 import {deserializeRecord, Record, RecordType, serializeRecord} from "../record";
@@ -22,12 +22,11 @@ export class RecordService {
 	// private record: Record = null;
 	private records: { [key: string]: Record } = null;
 
-	private recordObject: MediaObject;
 	private started: boolean = false;
 	private recording: boolean = false;
 
 	constructor(
-		private media: Media
+		// private media: Media
 	) { }
 
 	async load() {
@@ -152,7 +151,7 @@ export class RecordService {
 		if (record.baseUri == null) {
 			throw "The record must be linked and initialized by the RecordService before beginning record.";
 		} else {
-			return new RawRecorder(record, this.media);
+			return new RawRecorder(record/*, this.media*/);
 		}
 	}
 
@@ -178,7 +177,7 @@ export class RecordService {
 
 export class RawRecorder {
 
-	private currentRecorder: MediaObject;
+	//private currentRecorder: MediaObject;
 	private currentUri: string;
 
 	private idx: number = 0;
@@ -186,23 +185,23 @@ export class RawRecorder {
 
 	constructor(
 		private record: Record,
-		private media: Media
+		//private media: Media
 	) { }
 
 	start() {
-		if (this.currentRecorder == null) {
+		/*if (this.currentRecorder == null) {
 			this.currentUri = this.record.getMp3Uri(this.idx++)
 			this.currentRecorder = this.media.create(this.currentUri);
 			this.currentRecorder.startRecord();
-		}
+		}*/
 	}
 
 	stop() {
-		if (this.currentRecorder != null) {
+		/*if (this.currentRecorder != null) {
 			this.currentRecorder.stop();
 			this.currentRecorder = null;
 			this.files.push(this.currentUri);
-		}
+		}*/
 	}
 
 }
