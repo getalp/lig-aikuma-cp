@@ -27,7 +27,12 @@ export class RecordingInfoPage {
 		record.notes = this.notes;
 		await this.recordService.newRawRecord(record);
 
-		console.log(`dirPath: ${record.dirPath}, basePath: ${record.basePath}, dirRealPath: ${record.dirRealPath}, baseRealPath: ${record.baseRealPath}`);
+		// console.log("media devices: " + navigator.mediaDevices);
+		// console.log("classic get um: " + (<any>navigator).getUserMedia);
+		// console.log("webkit get um: " + (<any>navigator).webkitGetUserMedia);
+		// console.log("moz get um: " + (<any>navigator).mozGetUserMedia);
+
+		console.log(`dirPath: ${record.dirPath}, basePath: ${record.basePath}, dirUri: ${record.dirUri}, baseUri: ${record.baseUri}`);
 
 		await this.router.navigate(["recording", "classic", record.dirName]);
 

@@ -64,8 +64,8 @@ export class RecordService {
 				record.dirName = recordDir;
 				record.dirPath = computePath([RecordService.RECORDS_DIR, recordDir]);
 				record.basePath = basePath;
-				record.dirRealPath = RecordService.getRealPathFromUri(dirsStat.uri) + "/" + recordDir;
-				record.baseRealPath = record.dirRealPath + "/raw";
+				record.dirUri = dirsStat.uri + "/" + recordDir;
+				record.baseUri = record.dirUri + "/raw";
 
 				this.records[recordDir] = record;
 
@@ -116,8 +116,8 @@ export class RecordService {
 				record.dirName = dir;
 				record.dirPath = dirPath;
 				record.basePath = computePath([RecordService.RECORDS_DIR, dir, "raw"]);
-				record.dirRealPath = RecordService.getRealPathFromUri(res.uri);
-				record.baseRealPath = record.dirRealPath + "/raw";
+				record.dirUri = res.uri;
+				record.baseUri = record.dirUri + "/raw";
 
 				await Filesystem.writeFile({
 					...getCommonOptions(record.basePath + ".json"),
@@ -149,7 +149,7 @@ export class RecordService {
 	}
 
 	async beginRawRecord(record: Record): Promise<RawRecorder> {
-		if (record.baseRealPath == null) {
+		if (record.baseUri == null) {
 			throw "The record must be linked and initialized by the RecordService before beginning record.";
 		} else {
 			return new RawRecorder(record, this.media);
@@ -179,7 +179,7 @@ export class RecordService {
 export class RawRecorder {
 
 	private currentRecorder: MediaObject;
-	private currentPath: string;
+	private currentUri: string;
 
 	private idx: number = 0;
 	private files: string[] = [];
@@ -191,8 +191,8 @@ export class RawRecorder {
 
 	start() {
 		if (this.currentRecorder == null) {
-			this.currentPath = this.record.getWavRealPath(this.idx++)
-			this.currentRecorder = this.media.create(this.currentPath); // TODO: Use URI (file://)
+			this.currentUri = this.record.getMp3Uri(this.idx++)
+			this.currentRecorder = this.media.create(this.currentUri);
 			this.currentRecorder.startRecord();
 		}
 	}
@@ -201,7 +201,7 @@ export class RawRecorder {
 		if (this.currentRecorder != null) {
 			this.currentRecorder.stop();
 			this.currentRecorder = null;
-			this.files.push(this.currentPath);
+			this.files.push(this.currentUri);
 		}
 	}
 

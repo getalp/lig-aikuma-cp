@@ -9,8 +9,8 @@ export class Record {
 	public dirName: string = null;
 	public dirPath: string = null;
 	public basePath: string = null;
-	public dirRealPath: string = null;
-	public baseRealPath: string = null;
+	public dirUri: string = null;
+	public baseUri: string = null;
 
 	constructor(
 		public parent: Record,
@@ -31,8 +31,12 @@ export class Record {
 		return this.basePath + ".wav";
 	}
 
-	getWavRealPath(part?: number): string {
-		return this.baseRealPath + (part != null ? "." + part : "") + ".wav";
+	getWavUri(part?: number): string {
+		return this.baseUri + (part != null ? "." + part : "") + ".wav";
+	}
+
+	getMp3Uri(part?: number): string {
+		return this.baseUri + (part != null ? "." + part : "") + ".mp3";
 	}
 
 }
