@@ -3,7 +3,8 @@ import {Injectable} from '@angular/core';
 import {FilesystemEncoding, Plugins, ReaddirResult, StatResult} from '@capacitor/core';
 const {Filesystem} = Plugins;
 
-// import {Media, MediaObject} from '@ionic-native/media/ngx';
+import {VoiceRecorderPlugin} from "capacitor-voice-recorder";
+const VoiceRecorder: VoiceRecorderPlugin = Plugins.VoiceRecorder;
 
 import {computePath, getCommonOptions} from "../files";
 import {deserializeRecord, Record, RecordType, serializeRecord} from "../record";
@@ -16,18 +17,9 @@ export class RecordService {
 
 	private static readonly RECORDS_DIR = "records";
 
-	// private handler: RecordHandler = null;
-	// private noHandler: boolean = false;
-
-	// private record: Record = null;
 	private records: { [key: string]: Record } = null;
 
-	private started: boolean = false;
-	private recording: boolean = false;
-
-	constructor(
-		// private media: Media
-	) { }
+	constructor() { }
 
 	async load() {
 
@@ -177,31 +169,39 @@ export class RecordService {
 
 export class RawRecorder {
 
-	//private currentRecorder: MediaObject;
-	private currentUri: string;
+	private currentPath: string;
 
 	private idx: number = 0;
 	private files: string[] = [];
 
-	constructor(
-		private record: Record,
-		//private media: Media
-	) { }
+	constructor(private record: Record) { }
 
 	start() {
-		/*if (this.currentRecorder == null) {
-			this.currentUri = this.record.getMp3Uri(this.idx++)
-			this.currentRecorder = this.media.create(this.currentUri);
-			this.currentRecorder.startRecord();
-		}*/
+		const path = this.record.getAacPath(this.idx++);
+		VoiceRecorder.startRecording().then(_res => { // Ignore res, res.value always true
+			this.currentPath = path;
+		}).catch(err => {
+			console.warn("Failed to start recording: " + err);
+			this.currentPath = null;
+		});
 	}
 
 	stop() {
-		/*if (this.currentRecorder != null) {
-			this.currentRecorder.stop();
-			this.currentRecorder = null;
-			this.files.push(this.currentUri);
-		}*/
+		if (this.currentPath != null) {
+			VoiceRecorder.stopRecording().then(res => {
+				return Filesystem.writeFile({
+					...getCommonOptions(this.currentPath),
+					data: res.value.recordDataBase64
+				});
+			}).then(res => {
+				this.files.push(this.currentPath);
+				this.currentPath = null;
+				console.log("Successfully saved record to: " + res.uri);
+			}).catch(err => {
+				this.currentPath = null;
+				console.warn("Failed to stop recording: " + err);
+			});
+		}
 	}
 
 }
