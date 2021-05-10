@@ -31,8 +31,8 @@ export class Record {
 		return this.basePath + ".wav";
 	}
 
-	getAacUri(part?: number): string {
-		return this.baseUri + (part != null ? "." + part : "") + ".aac";
+	getAacUri(): string {
+		return this.baseUri + ".aac";
 	}
 
 }

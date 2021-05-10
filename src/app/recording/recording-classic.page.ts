@@ -32,8 +32,12 @@ export class RecordingClassicPage implements OnInit {
 		this.rawRecorder = await this.recordService.beginRawRecord(record);
 	}
 
-	start() {
-		this.rawRecorder.start();
+	resume() {
+		this.rawRecorder.resume();
+	}
+
+	pause() {
+		this.rawRecorder.pause();
 	}
 
 	stop() {

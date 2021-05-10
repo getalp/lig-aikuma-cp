@@ -167,53 +167,41 @@ export class RecordService {
 export class RawRecorder {
 
 	private currentPath: string;
-
-	private idx: number = 0;
-	private files: string[] = [];
+	private resumed: boolean;
 
 	constructor(private record: Record) { }
 
-	start() {
-		const path = this.record.getAacUri(this.idx++);
-		AikumaNative.startRecording({
-			path: path
-		}).then(() => {
-			this.currentPath = path;
-		}).catch(err => {
-			console.warn("Failed to start recording: " + err);
-			this.currentPath = null;
-		});
-		/*VoiceRecorder.startRecording().then(_res => { // Ignore res, res.value always true
-			this.currentPath = path;
-		}).catch(err => {
-			console.warn("Failed to start recording: " + err);
-			this.currentPath = null;
-		});*/
+	resume() {
+		if (this.currentPath != null) {
+			AikumaNative.resumeRecording().then(() => this.resumed = true);
+		} else {
+			const path = this.record.getAacUri();
+			AikumaNative.startRecording({
+				path: path // URI are allowed and automatically converted to path if beginning with file://
+			}).then(() => {
+				this.currentPath = path;
+			}).catch(err => {
+				console.warn("Failed to start recording: " + err);
+				this.currentPath = null;
+			});
+		}
+	}
+
+	pause() {
+		if (this.currentPath != null) {
+			AikumaNative.pauseRecording().then(() => this.resumed = false);
+		}
 	}
 
 	stop() {
 		if (this.currentPath != null) {
 			AikumaNative.stopRecording().then(res => {
-				this.files.push(this.currentPath);
 				this.currentPath = null;
 				console.log("Successfully saved record to: " + res.path);
 			}).catch(err => {
 				this.currentPath = null;
 				console.warn("Failed to stop recording: " + err);
 			});
-			/*VoiceRecorder.stopRecording().then(res => {
-				return Filesystem.writeFile({
-					...getCommonOptions(this.currentPath),
-					data: res.value.recordDataBase64
-				});
-			}).then(res => {
-				this.files.push(this.currentPath);
-				this.currentPath = null;
-				console.log("Successfully saved record to: " + res.uri);
-			}).catch(err => {
-				this.currentPath = null;
-				console.warn("Failed to stop recording: " + err);
-			});*/
 		}
 	}
 
