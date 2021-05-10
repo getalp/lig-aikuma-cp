@@ -1,7 +1,7 @@
-import {FilesystemDirectory} from "@capacitor/core";
+import {Directory} from "@capacitor/filesystem";
 
 export const DIRECTORY = "lig-aikuma-cp";
-export const ROOT = FilesystemDirectory.Documents;
+export const ROOT = Directory.Documents;
 
 export function computePath(pathParts: string[]): string {
 	return [DIRECTORY, ...pathParts].join("/");
@@ -9,7 +9,7 @@ export function computePath(pathParts: string[]): string {
 
 export interface CommonOptions {
 	path: string;
-	directory: FilesystemDirectory;
+	directory: Directory;
 }
 
 export function getCommonOptions(pathParts: string | string[]): CommonOptions {

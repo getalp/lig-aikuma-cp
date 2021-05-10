@@ -1,7 +1,6 @@
 import {Injectable} from '@angular/core';
 
-import {FilesystemEncoding, Plugins} from '@capacitor/core';
-const {Filesystem} = Plugins;
+import {Filesystem, Encoding} from "@capacitor/filesystem";
 
 import {SpeakerSerialized, Speaker, deserializeSpeaker, serializeSpeaker} from "../speaker";
 import {getCommonOptions} from "../files";
@@ -25,7 +24,7 @@ export class SpeakerService {
 
 			this.speakers = Filesystem.readFile({
 				...getCommonOptions([SpeakerService.SPEAKERS_DB]),
-				encoding: FilesystemEncoding.UTF8
+				encoding: Encoding.UTF8
 			}).then(res => {
 				const data: { [key: string]: SpeakerSerialized } = JSON.parse(res.data);
 				const speakers: { [key: string]: Speaker } = {};
@@ -57,7 +56,7 @@ export class SpeakerService {
 
 			return Filesystem.writeFile({
 				...getCommonOptions([SpeakerService.SPEAKERS_DB]),
-				encoding: FilesystemEncoding.UTF8,
+				encoding: Encoding.UTF8,
 				data: JSON.stringify(data),
 				recursive: true
 			}).then(_ => {});
