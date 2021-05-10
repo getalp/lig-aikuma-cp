@@ -197,11 +197,19 @@ export class RawRecorder {
 		if (this.currentPath != null) {
 			AikumaNative.stopRecording().then(res => {
 				this.currentPath = null;
-				console.log("Successfully saved record to: " + res.path);
+				console.log("Successfully saved record to: " + res.path + " (" + res.duration + "s)");
 			}).catch(err => {
 				this.currentPath = null;
 				console.warn("Failed to stop recording: " + err);
 			});
+		}
+	}
+
+	async getDuration(): Promise<number> {
+		if (this.currentPath != null) {
+			return (await AikumaNative.getRecordDuration()).duration;
+		} else {
+			return 0;
 		}
 	}
 

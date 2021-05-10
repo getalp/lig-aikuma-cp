@@ -146,7 +146,10 @@ public class NativePlugin extends Plugin {
 		}
 
 		this.recorder.stop();
-		this.pauseDuration();
+
+		if (!this.paused) {
+			this.pauseDuration();
+		}
 
 		this.recorder.release();
 		this.recorder = null;
