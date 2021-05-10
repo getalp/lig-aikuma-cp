@@ -72,6 +72,8 @@ public class NativePlugin extends Plugin {
 			this.recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
 			this.recorder.setOutputFormat(MediaRecorder.OutputFormat.AAC_ADTS);
 			this.recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+			this.recorder.setAudioSamplingRate(32000);
+			this.recorder.setAudioEncodingBitRate(32000);
 			this.recorder.setOutputFile(path);
 			this.recorder.prepare();
 			this.recorder.start();
