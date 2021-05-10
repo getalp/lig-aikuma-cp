@@ -39,6 +39,10 @@ public class NativePlugin extends Plugin {
 	private MediaRecorder recorder;
 	private String path;
 
+	private boolean paused;
+	private long totalTime;
+	private long startTime;
+
 	@PluginMethod
 	public void startRecording(PluginCall call) {
 
@@ -77,7 +81,13 @@ public class NativePlugin extends Plugin {
 			this.recorder.setOutputFile(path);
 			this.recorder.prepare();
 			this.recorder.start();
+
 			this.path = path;
+
+			this.paused = false;
+			this.totalTime = 0;
+			this.resumeDuration();
+
 			call.resolve();
 
 		} catch (IOException e) {
@@ -100,7 +110,11 @@ public class NativePlugin extends Plugin {
 	@SuppressWarnings("unused")
 	public void pauseRecording(PluginCall call) {
 		if (this.recorder != null) {
-			this.recorder.pause();
+			if (!this.paused) {
+				this.recorder.pause();
+				this.pauseDuration();
+				this.paused = true;
+			}
 			call.resolve();
 		} else {
 			call.reject(ERR_NOT_RECORDING);
@@ -111,7 +125,11 @@ public class NativePlugin extends Plugin {
 	@SuppressWarnings("unused")
 	public void resumeRecording(PluginCall call) {
 		if (this.recorder != null) {
-			this.recorder.resume();
+			if (this.paused) {
+				this.recorder.resume();
+				this.resumeDuration();
+				this.paused = false;
+			}
 			call.resolve();
 		} else {
 			call.reject(ERR_NOT_RECORDING);
@@ -128,14 +146,43 @@ public class NativePlugin extends Plugin {
 		}
 
 		this.recorder.stop();
+		this.pauseDuration();
+
 		this.recorder.release();
 		this.recorder = null;
 
 		JSObject obj = new JSObject();
 		obj.put("path", this.path);
-		obj.put("duration", 0.0); // TODO
+		obj.put("duration", this.totalTime * 1e-9D);
+		this.totalTime = 0;
+
 		call.resolve(obj);
 
+	}
+
+	@PluginMethod
+	@SuppressWarnings("unused")
+	public void getDuration(PluginCall call) {
+		if (this.recorder == null) {
+			call.reject(ERR_NOT_RECORDING);
+		} else {
+			JSObject obj = new JSObject();
+			if (this.startTime == 0) {
+				obj.put("duration", this.totalTime * 1e-9D);
+			} else {
+				obj.put("duration", (this.totalTime + System.nanoTime() - this.startTime) * 1e-9D);
+			}
+			call.resolve(obj);
+		}
+	}
+
+	private void resumeDuration() {
+		this.startTime = System.nanoTime();
+	}
+
+	private void pauseDuration() {
+		this.totalTime += System.nanoTime() - this.startTime;
+		this.startTime = 0;
 	}
 
 	private boolean isRecordingAllowed() {

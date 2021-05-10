@@ -8,10 +8,14 @@ export interface RecordInfo {
 	duration: number
 }
 
+export interface RecordDuration {
+	duration: number
+}
+
 export interface NativePlugin {
 	startRecording(options: RecordOptions): Promise<void>;
 	pauseRecording(): Promise<void>;
 	resumeRecording(): Promise<void>;
 	stopRecording(): Promise<RecordInfo>;
-	// getRecordDuration(): Promise<number>;
+	getRecordDuration(): Promise<RecordDuration>;
 }

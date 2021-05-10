@@ -1,6 +1,6 @@
 import {WebPlugin} from '@capacitor/core';
 
-import type {NativePlugin, RecordOptions, RecordInfo} from './definitions';
+import type {NativePlugin, RecordOptions, RecordInfo, RecordDuration} from './definitions';
 
 export class NativePluginWeb extends WebPlugin implements NativePlugin {
 
@@ -18,6 +18,10 @@ export class NativePluginWeb extends WebPlugin implements NativePlugin {
 
 	stopRecording(): Promise<RecordInfo> {
 		return Promise.reject("Not implemented");
+	}
+
+	getRecordDuration(): Promise<RecordDuration> {
+		return Promise.resolve(undefined);
 	}
 
 }
