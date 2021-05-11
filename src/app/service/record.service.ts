@@ -166,47 +166,77 @@ export class RecordService {
 
 export class RawRecorder {
 
-	private currentPath: string;
-	private resumed: boolean;
+	private currentPath: string = null;
+	private paused: boolean = true;
 
 	constructor(private record: Record) { }
 
-	resume() {
-		if (this.currentPath != null) {
-			AikumaNative.resumeRecording().then(() => this.resumed = true);
+	isStarted(): boolean {
+		return this.currentPath != null;
+	}
+
+	isPaused(): boolean {
+		return this.currentPath == null || this.paused;
+	}
+
+	resume(): Promise<void> {
+		if (this.isStarted()) {
+			return AikumaNative.resumeRecording().then(() => {
+				this.paused = false;
+			});
 		} else {
 			const path = this.record.getAacUri();
-			AikumaNative.startRecording({
+			return AikumaNative.startRecording({
 				path: path // URI are allowed and automatically converted to path if beginning with file://
 			}).then(() => {
 				this.currentPath = path;
+				this.paused = false;
 			}).catch(err => {
 				console.warn("Failed to start recording: " + err);
 				this.currentPath = null;
+				if (err.message === "ALREADY_RECORDING") {
+					return AikumaNative.stopRecording().then(() => this.resume());
+				}
 			});
 		}
 	}
 
-	pause() {
-		if (this.currentPath != null) {
-			AikumaNative.pauseRecording().then(() => this.resumed = false);
+	pause(): Promise<void> {
+		if (this.isStarted()) {
+			return AikumaNative.pauseRecording().then(() => {
+				this.paused = true;
+			});
+		} else {
+			return Promise.reject("not started");
 		}
 	}
 
-	stop() {
-		if (this.currentPath != null) {
-			AikumaNative.stopRecording().then(res => {
+	toggle(): Promise<void> {
+		if (this.isPaused()) {
+			return this.resume();
+		} else {
+			return this.pause();
+		}
+	}
+
+	stop(): Promise<void> {
+		if (this.isStarted()) {
+			return AikumaNative.stopRecording().then(res => {
 				this.currentPath = null;
+				this.paused = true;
 				console.log("Successfully saved record to: " + res.path + " (" + res.duration + "s)");
 			}).catch(err => {
 				this.currentPath = null;
+				this.paused = true;
 				console.warn("Failed to stop recording: " + err);
 			});
+		} else {
+			return Promise.reject();
 		}
 	}
 
 	async getDuration(): Promise<number> {
-		if (this.currentPath != null) {
+		if (this.isStarted()) {
 			return (await AikumaNative.getRecordDuration()).duration;
 		} else {
 			return 0;

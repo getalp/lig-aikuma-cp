@@ -31,7 +31,7 @@ import java.io.IOException;
 public class NativePlugin extends Plugin {
 
 	private static final String ERR_NOT_RECORDING               = "NOT_RECORDING";
-	private static final String ERR_ALREADY_RECORDING           = "ALREADY_RECORDING_RECORDING";
+	private static final String ERR_ALREADY_RECORDING           = "ALREADY_RECORDING";
 	private static final String ERR_MICROPHONE_NOT_AVAILABLE    = "MICROPHONE_NOT_AVAILABLE";
 	private static final String ERR_INVALID_PATH                = "INVALID_PATH";
 	private static final String ERR_MISSING_PERMISSION          = "MISSING_PERMISSION";

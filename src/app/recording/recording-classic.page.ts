@@ -4,6 +4,8 @@ import {ActivatedRoute} from "@angular/router";
 
 import {RawRecorder, RecordService} from "../service/record.service";
 import {AikumaNative} from "../native";
+import {Record} from "../record";
+import {Iso639Service} from "../service/iso-639.service";
 
 
 @Component({
@@ -14,45 +16,73 @@ import {AikumaNative} from "../native";
 export class RecordingClassicPage implements OnInit, OnDestroy {
 
 	private rawRecorder: RawRecorder = null;
-
-	public time: number = 0;
 	private timeHandle: Promise<PluginListenerHandle>;
+
+	public duration: number = 0;
+	public record: Record;
+	public speakerDetails: string;
+	public recordingDetails: string;
+
+	public started: boolean = false;
+	public paused: boolean = false;
 
 	constructor(
 		private ngZone: NgZone,
 		private route: ActivatedRoute,
-		private recordService: RecordService
+		private recordService: RecordService,
+		private iso639Service: Iso639Service
 	) { }
 
-	ngOnInit() {
-		this.init().then();
+	async ngOnInit() {
+
+		const recordDirName = this.route.snapshot.paramMap.get("recordDirName");
+		this.record = await this.recordService.getRecord(recordDirName);
+		this.rawRecorder = await this.recordService.beginRawRecord(this.record);
+
+		this.speakerDetails = (await this.iso639Service.getLanguage(this.record.speaker.nativeLanguage))?.printName;
+
+		for (let otherLanguage of this.record.speaker.otherLanguages) {
+			let otherLanguageObj = await this.iso639Service.getLanguage(otherLanguage);
+			if (otherLanguageObj != null) {
+				if (this.speakerDetails == null) {
+					this.speakerDetails = "";
+				} else {
+					this.speakerDetails += ", ";
+				}
+				this.speakerDetails += otherLanguageObj.printName;
+			}
+		}
+
+		this.recordingDetails = (await this.iso639Service.getLanguage(this.record.language))?.printName;
+
 		this.timeHandle = AikumaNative.addListener("recordDuration", res => {
 			this.ngZone.run(() => {
-				this.time = res.duration;
+				this.duration = res.duration;
 			});
 		});
+
+		this.paused = true;
+
 	}
 
 	ngOnDestroy() {
 		this.timeHandle.then(handle => handle.remove());
+		this.rawRecorder.stop().catch(() => {});
 	}
 
-	private async init() {
-		const recordDirName = this.route.snapshot.paramMap.get("recordDirName");
-		const record = await this.recordService.getRecord(recordDirName);
-		this.rawRecorder = await this.recordService.beginRawRecord(record);
+	// Public API //
+
+	async onPauseOrResumeClick() {
+		await this.rawRecorder.toggle();
+		this.started = this.rawRecorder.isStarted();
+		this.paused = this.rawRecorder.isPaused();
 	}
 
-	resume() {
-		this.rawRecorder.resume();
-	}
-
-	pause() {
-		this.rawRecorder.pause();
-	}
-
-	stop() {
-		this.rawRecorder.stop();
+	async onStopClick() {
+		await this.rawRecorder.stop();
+		this.started = this.rawRecorder.isStarted();
+		this.paused = this.rawRecorder.isPaused();
+		console.log(`this.started: ${this.started}, this.paused: ${this.paused}`);
 	}
 
 }

@@ -24,6 +24,7 @@
     "@capacitor/android": "^3.0.0-rc.2",
     "@capacitor/core": "^3.0.0-rc.2",
     "@capacitor/filesystem": "^0.5.4",
+    "@capacitor/toast": "^0.4.9",
     "@ionic/angular": "^5.5.2",
     "@ionic/pwa-elements": "^3.0.2",
     "@types/dom-mediacapture-record": "^1.0.7",

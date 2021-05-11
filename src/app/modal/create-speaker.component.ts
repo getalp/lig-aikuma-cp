@@ -1,9 +1,8 @@
 import {Component, Input} from '@angular/core';
 import {ModalController} from "@ionic/angular";
 import {SpeakerService} from "../service/speaker.service";
-import {Plugins} from "@capacitor/core";
 import {Gender, Speaker} from "../speaker";
-const {Toast} = Plugins;
+import {Toast} from "@capacitor/toast";
 
 
 @Component({
