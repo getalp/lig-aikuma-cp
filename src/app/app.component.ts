@@ -1,4 +1,5 @@
 import {Component} from '@angular/core';
+import {Platform} from "@ionic/angular";
 
 
 @Component({
@@ -8,6 +9,13 @@ import {Component} from '@angular/core';
 })
 export class AppComponent {
 
-	constructor() { }
+	constructor(
+		private platform: Platform
+	) {
+		/*console.log("construct app");
+		this.platform.backButton.subscribeWithPriority(10, () => {
+			console.log("back");
+		});*/
+	}
 
 }
