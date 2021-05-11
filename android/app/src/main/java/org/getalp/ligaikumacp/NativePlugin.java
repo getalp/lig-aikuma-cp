@@ -43,6 +43,8 @@ public class NativePlugin extends Plugin {
 	private long totalTime;
 	private long startTime;
 
+	private Thread durationThread;
+
 	@PluginMethod
 	public void startRecording(PluginCall call) {
 
@@ -88,6 +90,12 @@ public class NativePlugin extends Plugin {
 			this.totalTime = 0;
 			this.resumeDuration();
 
+			if (this.durationThread == null) {
+				this.durationThread = new Thread(this::runDurationThread);
+				this.durationThread.setDaemon(true);
+				this.durationThread.start();
+			}
+
 			call.resolve();
 
 		} catch (IOException e) {
@@ -112,8 +120,9 @@ public class NativePlugin extends Plugin {
 		if (this.recorder != null) {
 			if (!this.paused) {
 				this.recorder.pause();
-				this.pauseDuration();
 				this.paused = true;
+				this.pauseDuration();
+				this.notifyDurationListeners();
 			}
 			call.resolve();
 		} else {
@@ -127,8 +136,8 @@ public class NativePlugin extends Plugin {
 		if (this.recorder != null) {
 			if (this.paused) {
 				this.recorder.resume();
-				this.resumeDuration();
 				this.paused = false;
+				this.resumeDuration();
 			}
 			call.resolve();
 		} else {
@@ -154,10 +163,19 @@ public class NativePlugin extends Plugin {
 		this.recorder.release();
 		this.recorder = null;
 
+		try {
+			this.durationThread.join(1000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} finally {
+			this.durationThread = null;
+		}
+
 		JSObject obj = new JSObject();
 		obj.put("path", this.path);
 		obj.put("duration", this.totalTime * 1e-9D);
 		this.totalTime = 0;
+		this.notifyDurationListeners();
 
 		call.resolve(obj);
 
@@ -165,18 +183,33 @@ public class NativePlugin extends Plugin {
 
 	@PluginMethod
 	@SuppressWarnings("unused")
-	public void getDuration(PluginCall call) {
+	public void getRecordDuration(PluginCall call) {
 		if (this.recorder == null) {
 			call.reject(ERR_NOT_RECORDING);
 		} else {
 			JSObject obj = new JSObject();
-			if (this.startTime == 0) {
-				obj.put("duration", this.totalTime * 1e-9D);
-			} else {
-				obj.put("duration", (this.totalTime + System.nanoTime() - this.startTime) * 1e-9D);
-			}
+			obj.put("duration", this.getDuration());
 			call.resolve(obj);
 		}
+	}
+
+	private void runDurationThread() {
+		while (this.recorder != null) {
+			if (!this.paused) {
+				this.notifyDurationListeners();
+			}
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				break;
+			}
+		}
+	}
+
+	private void notifyDurationListeners() {
+		JSObject obj = new JSObject();
+		obj.put("duration", this.getDuration());
+		this.notifyListeners("recordDuration", obj);
 	}
 
 	private void resumeDuration() {
@@ -186,6 +219,14 @@ public class NativePlugin extends Plugin {
 	private void pauseDuration() {
 		this.totalTime += System.nanoTime() - this.startTime;
 		this.startTime = 0;
+	}
+
+	private double getDuration() {
+		if (this.startTime == 0) {
+			return this.totalTime * 1e-9D;
+		} else {
+			return (this.totalTime + System.nanoTime() - this.startTime) * 1e-9D;
+		}
 	}
 
 	private boolean isRecordingAllowed() {
