@@ -12,6 +12,8 @@ export class Record {
 	public dirUri: string = null;
 	public baseUri: string = null;
 
+	public hasAudio: boolean = false;
+
 	constructor(
 		public parent: Record,
 		public speaker: Speaker,
@@ -27,8 +29,8 @@ export class Record {
 		return this.basePath + ".json";
 	}
 
-	getWavPath(): string {
-		return this.basePath + ".wav";
+	getAacPath(): string {
+		return this.basePath + ".aac";
 	}
 
 	getAacUri(): string {

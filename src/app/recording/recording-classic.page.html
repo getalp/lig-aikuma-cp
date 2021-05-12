@@ -17,15 +17,17 @@
 		<ion-card-content>Recording in {{ recordingDetails }}</ion-card-content>
 	</ion-card>
 
-	<div style="width: 70%; margin: 25px auto 0 auto;">
+	<div style="width: 90%; margin: 25px auto 0 auto;">
+
 		<ion-button expand="block" (click)="onPauseOrResumeClick()" [style.height.px]="100">
 			<ion-icon *ngIf="paused" name="square"></ion-icon>
 			<ion-icon *ngIf="!paused" name="pause"></ion-icon>
 		</ion-button>
+
+		<h5 *ngIf="started" style="text-align: center;">{{ duration.toFixed(1) }}s</h5>
+
+		<ion-button expand="block" (click)="onSaveClick()" [disabled]="!this.started || !this.paused" style="margin-top: 25px;">Save</ion-button>
+
 	</div>
-
-	<h5 *ngIf="started" style="text-align: center;">{{ duration.toFixed(1) }}s</h5>
-
-	<ion-button expand="block" (click)="onStopClick()" [disabled]="!this.started || !this.paused" style="margin-top: 25px;">Save</ion-button>
 
 </ion-content>

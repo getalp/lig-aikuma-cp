@@ -55,6 +55,11 @@ export class RecordService {
 				record.dirUri = dirsStat.uri + "/" + recordDir;
 				record.baseUri = record.dirUri + "/raw";
 
+				try {
+					await Filesystem.stat(getCommonOptions(record.getAacPath()));
+					record.hasAudio = true;
+				} catch (ignored) {}
+
 				this.records[recordDir] = record;
 
 			} catch (e) {
@@ -123,6 +128,21 @@ export class RecordService {
 		}
 
 		throw "Too much record directory with the same id.";
+
+	}
+
+	async deleteRecord(record: Record): Promise<void> {
+
+		if (record.type !== RecordType.Raw || record.parent != null) {
+			throw "You must use the raw record without parent to delete the directory.";
+		}
+
+		await Filesystem.rmdir({
+			...getCommonOptions(record.dirPath),
+			recursive: true
+		});
+
+		delete this.records[record.dirName];
 
 	}
 
@@ -224,6 +244,7 @@ export class RawRecorder {
 			return AikumaNative.stopRecording().then(res => {
 				this.currentPath = null;
 				this.paused = true;
+				this.record.hasAudio = true;
 				console.log("Successfully saved record to: " + res.path + " (" + res.duration + "s)");
 			}).catch(err => {
 				this.currentPath = null;

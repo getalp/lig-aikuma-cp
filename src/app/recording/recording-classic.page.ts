@@ -1,11 +1,14 @@
-import {Component, NgZone, OnDestroy, OnInit} from '@angular/core';
 import {PluginListenerHandle} from "@capacitor/core/types/definitions";
+import {Component, NgZone, OnDestroy, OnInit} from '@angular/core';
 import {ActivatedRoute} from "@angular/router";
+import {Location} from "@angular/common";
+
+import {Toast} from "@capacitor/toast";
 
 import {RawRecorder, RecordService} from "../service/record.service";
+import {Iso639Service} from "../service/iso-639.service";
 import {AikumaNative} from "../native";
 import {Record} from "../record";
-import {Iso639Service} from "../service/iso-639.service";
 
 
 @Component({
@@ -30,7 +33,8 @@ export class RecordingClassicPage implements OnInit, OnDestroy {
 		private ngZone: NgZone,
 		private route: ActivatedRoute,
 		private recordService: RecordService,
-		private iso639Service: Iso639Service
+		private iso639Service: Iso639Service,
+		private location: Location
 	) { }
 
 	async ngOnInit() {
@@ -65,9 +69,19 @@ export class RecordingClassicPage implements OnInit, OnDestroy {
 
 	}
 
-	ngOnDestroy() {
+	async ngOnDestroy() {
+
 		this.timeHandle.then(handle => handle.remove());
-		this.rawRecorder.stop().catch(() => {});
+
+		if (this.rawRecorder.isStarted()) {
+			this.rawRecorder.stop().catch(() => {});
+		}
+
+		if (!this.record.hasAudio) {
+			console.log("Not recorded, deleting record.");
+			await this.recordService.deleteRecord(this.record);
+		}
+
 	}
 
 	// Public API //
@@ -78,11 +92,18 @@ export class RecordingClassicPage implements OnInit, OnDestroy {
 		this.paused = this.rawRecorder.isPaused();
 	}
 
-	async onStopClick() {
+	async onSaveClick() {
+
 		await this.rawRecorder.stop();
 		this.started = this.rawRecorder.isStarted();
 		this.paused = this.rawRecorder.isPaused();
-		console.log(`this.started: ${this.started}, this.paused: ${this.paused}`);
+
+		await Toast.show({
+			text: "Successfully saved the audio."
+		});
+
+		this.location.back();
+
 	}
 
 }
