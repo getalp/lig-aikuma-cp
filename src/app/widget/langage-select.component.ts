@@ -6,7 +6,7 @@ import {Iso639Service, Language} from "../service/iso-639.service";
 
 @Component({
 	selector: 'app-langage-select',
-	template: '<ion-button #button (click)="onClick()">{{ text }}</ion-button>'
+	template: '<ion-button #button (click)="onClick()" [disabled]="modalOpened">{{ text }}</ion-button>'
 })
 export class LangageSelectComponent {
 
@@ -18,28 +18,32 @@ export class LangageSelectComponent {
 
 	private langage?: Language;
 	public text: string = LangageSelectComponent.NO_SELECT_TEXT;
+	public modalOpened: boolean = false;
 
 	constructor(
 		private iso639Service: Iso639Service,
 		private modalCtl: ModalController
 	) { }
 
-	onClick() {
-
-		this.modalCtl.create({
-			component: SelectLangageModal,
-			componentProps: {
-				"optional": this.optional === "" || this.optional
-			}
-		}).then(r => {
-			return r.present().then(() => {
-				r.onWillDismiss().then(value => {
-					if (value.data != null) {
-						this.setLangage(value.data.langage, true);
+	async onClick() {
+		if (!this.modalOpened) {
+			this.modalOpened = true;
+			try {
+				const modal = await this.modalCtl.create({
+					component: SelectLangageModal,
+					componentProps: {
+						"optional": this.optional === "" || this.optional
 					}
 				});
-			});
-		});
+				modal.present().then();
+				const detail = await modal.onWillDismiss();
+				if (detail.data != null) {
+					this.setLangage(detail.data.langage, true);
+				}
+			} finally {
+				this.modalOpened = false;
+			}
+		}
 	}
 
 	@Input()

@@ -7,7 +7,7 @@ import {Speaker} from "../speaker";
 
 @Component({
 	selector: 'app-speaker-select',
-	template: '<ion-button #button (click)="onClick()">{{ text }}</ion-button>'
+	template: '<ion-button #button (click)="onClick()" [disabled]="modalOpened">{{ text }}</ion-button>'
 })
 export class SpeakerSelectComponent {
 
@@ -18,24 +18,29 @@ export class SpeakerSelectComponent {
 
 	private speaker?: any;
 	public text: string = SpeakerSelectComponent.NO_SELECT_TEXT;
+	public modalOpened: boolean = false;
 
 	constructor(
 		private speakerService: SpeakerService,
 		private modalCtl: ModalController
 	) { }
 
-	onClick() {
-		this.modalCtl.create({
-			component: SelectSpeakerModal
-		}).then(r => {
-			return r.present().then(() => {
-				r.onWillDismiss().then(value => {
-					if (value.data != null) {
-						this.setSpeaker(value.data.speaker);
-					}
+	async onClick() {
+		if (!this.modalOpened) {
+			this.modalOpened = true;
+			try {
+				const modal = await this.modalCtl.create({
+					component: SelectSpeakerModal
 				});
-			});
-		});
+				modal.present().then();
+				const detail = await modal.onWillDismiss();
+				if (detail.data != null) {
+					this.setSpeaker(detail.data.speaker);
+				}
+			} finally {
+				this.modalOpened = false;
+			}
+		}
 	}
 
 	private setSpeaker(speaker?: Speaker) {
