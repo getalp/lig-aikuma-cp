@@ -1,7 +1,6 @@
 import {Component, Input, ElementRef, OnInit, OnDestroy, AfterViewInit, ViewChild} from '@angular/core';
 
-import {Plugins, FilesystemDirectory} from '@capacitor/core';
-const {Filesystem} = Plugins;
+import {Filesystem, Directory} from '@capacitor/filesystem';
 
 import {ResizeSensor} from "css-element-queries";
 import {WaveformData} from 'waveform-data';
@@ -90,7 +89,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 			this.lastPath = path;
 			Filesystem.readFile({
 				path: path,
-				directory: FilesystemDirectory.Documents
+				directory: Directory.Documents
 			}).then(res => {
 				return base64ToBuffer(res.data);
 			}).then(buf => {
