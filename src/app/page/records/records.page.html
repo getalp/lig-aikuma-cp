@@ -1,0 +1,21 @@
+<ion-header translucent>
+	<ion-toolbar>
+		<ion-buttons slot="start">
+			<ion-back-button defaultHref="/"></ion-back-button>
+		</ion-buttons>
+		<ion-title>Records</ion-title>
+	</ion-toolbar>
+</ion-header>
+
+<ion-content fullscreen>
+
+	<ion-list>
+		<ion-item button *ngFor="let record of records">
+			<ion-label>
+				<h2>{{ record[0].date.toLocaleString() }}<span *ngIf="record[0].duration != null">&nbsp;({{ formatDuration(record[0].duration) }})</span></h2>
+				<h4>{{ record[0].speaker.name }} (recorded in {{ (record[1] | async).printName }})</h4>
+			</ion-label>
+		</ion-item>
+	</ion-list>
+
+</ion-content>

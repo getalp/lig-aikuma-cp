@@ -1,7 +1,7 @@
 import {Component} from '@angular/core';
-import {RecordService} from "../service/record.service";
-import {Speaker} from "../speaker";
-import {Record} from "../record";
+import {RecordService} from "../../service/record.service";
+import {Speaker} from "../../speaker";
+import {Record} from "../../record";
 import {Router} from "@angular/router";
 
 

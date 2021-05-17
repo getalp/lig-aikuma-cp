@@ -5,6 +5,7 @@ export class Record {
 
 	public notes: string = "";
 	public date: Date = new Date();
+	public duration: number | null = null;
 
 	public dirName: string = null;
 	public dirPath: string = null;
@@ -51,7 +52,8 @@ export interface RecordSerialized {
 	"language": string,
 	"type": string,
 	"date": string,
-	"notes": string
+	"notes": string,
+	"duration": number | null
 }
 
 
@@ -61,7 +63,8 @@ export function serializeRecord(record: Record): RecordSerialized {
 		"language": record.language,
 		"type": record.type,
 		"date": record.date.toISOString(),
-		"notes": record.notes
+		"notes": record.notes,
+		"duration": record.duration
 	};
 }
 
@@ -69,7 +72,8 @@ export function serializeRecord(record: Record): RecordSerialized {
 export function deserializeRecord(parent: Record, raw: RecordSerialized): Record {
 	const speaker = deserializeSpeaker(null, raw["speaker"]);
 	const record = new Record(parent, speaker, raw["language"], <RecordType>raw["type"]);
-	record.date = new Date(raw["data"]);
+	record.date = new Date(raw["date"]);
 	record.notes = raw["notes"];
+	record.duration = raw["duration"];
 	return record;
 }

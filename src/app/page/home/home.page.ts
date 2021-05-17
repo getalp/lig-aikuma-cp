@@ -19,6 +19,7 @@ export class HomePage {
 		{
 			title: "Editing",
 			children: [
+				{title: "Records", icon: "list", router: {link: "/records"}},
 				{title: "Respeaking", icon: "volume-high"},
 				{title: "Translating", icon: "earth"},
 			]

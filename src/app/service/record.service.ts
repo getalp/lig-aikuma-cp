@@ -5,6 +5,7 @@ import {AikumaNative} from "../native";
 
 import {computePath, getCommonOptions} from "../files";
 import {deserializeRecord, Record, RecordType, serializeRecord} from "../record";
+import {formatTwoDigit} from "../utils";
 
 
 @Injectable({
@@ -70,10 +71,11 @@ export class RecordService {
 
 	}
 
-	async ensureLoaded() {
+	async ensureLoaded(): Promise<{ [key: string]: Record }> {
 		if (this.records == null) {
 			await this.load();
 		}
+		return this.records;
 	}
 
 	async newRawRecord(record: Record) {
@@ -113,7 +115,7 @@ export class RecordService {
 				record.baseUri = record.dirUri + "/raw";
 
 				await Filesystem.writeFile({
-					...getCommonOptions(record.basePath + ".json"),
+					...getCommonOptions(record.getMetaPath()),
 					encoding: Encoding.UTF8,
 					data: JSON.stringify(serializeRecord(record)),
 					recursive: true
@@ -146,9 +148,22 @@ export class RecordService {
 
 	}
 
+	async saveRecord(record: Record): Promise<void> {
+
+		if (record.basePath == null) {
+			throw "The record should have a base path";
+		}
+
+		await Filesystem.writeFile({
+			...getCommonOptions(record.getMetaPath()),
+			encoding: Encoding.UTF8,
+			data: JSON.stringify(serializeRecord(record))
+		});
+
+	}
+
 	async getRecord(dir: string): Promise<Record> {
-		await this.ensureLoaded();
-		const record = this.records[dir];
+		const record = (await this.ensureLoaded())[dir];
 		if (record == null) {
 			throw `Invalid record directory '${dir}'.`;
 		} else {
@@ -160,21 +175,17 @@ export class RecordService {
 		if (record.baseUri == null) {
 			throw "The record must be linked and initialized by the RecordService before beginning record.";
 		} else {
-			return new RawRecorder(record/*, this.media*/);
+			return new RawRecorder(this, record);
 		}
-	}
-
-	static formatTwoDigit(num: number): string {
-		return (num < 10 ? "0" : "") + num.toString();
 	}
 
 	static getRecordDirName(record: Record): string {
 		const date = record.date;
 		return date.getFullYear() + "-" +
-			this.formatTwoDigit(date.getMonth() + 1) + "-" +
-			this.formatTwoDigit(date.getDate()) + "_" +
-			this.formatTwoDigit(date.getHours()) + "-" +
-			this.formatTwoDigit(date.getMinutes());
+			formatTwoDigit(date.getMonth() + 1) + "-" +
+			formatTwoDigit(date.getDate()) + "_" +
+			formatTwoDigit(date.getHours()) + "-" +
+			formatTwoDigit(date.getMinutes());
 	}
 
 	static getRealPathFromUri(uri: string): string {
@@ -189,7 +200,10 @@ export class RawRecorder {
 	private currentPath: string = null;
 	private paused: boolean = true;
 
-	constructor(private record: Record) { }
+	constructor(
+		private service: RecordService,
+		private record: Record
+	) { }
 
 	isStarted(): boolean {
 		return this.currentPath != null;
@@ -245,7 +259,10 @@ export class RawRecorder {
 				this.currentPath = null;
 				this.paused = true;
 				this.record.hasAudio = true;
-				console.log("Successfully saved record to: " + res.path + " (" + res.duration + "s)");
+				this.record.duration = res.duration;
+				return this.service.saveRecord(this.record).then(() => {
+					console.log("Successfully saved record to: " + res.path + " (" + res.duration + "s)");
+				});
 			}).catch(err => {
 				this.currentPath = null;
 				this.paused = true;

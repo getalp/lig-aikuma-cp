@@ -5,10 +5,10 @@ import {Location} from "@angular/common";
 
 import {Toast} from "@capacitor/toast";
 
-import {RawRecorder, RecordService} from "../service/record.service";
-import {Iso639Service} from "../service/iso-639.service";
-import {AikumaNative} from "../native";
-import {Record} from "../record";
+import {RawRecorder, RecordService} from "../../service/record.service";
+import {Iso639Service} from "../../service/iso-639.service";
+import {AikumaNative} from "../../native";
+import {Record} from "../../record";
 
 
 @Component({

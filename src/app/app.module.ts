@@ -12,9 +12,10 @@ import {SelectSpeakerModal} from "./modal/select-speaker.component";
 import {CreateSpeakerModal} from "./modal/create-speaker.component";
 import {WidgetModule} from "./widget/module";
 import {FormsModule} from "@angular/forms";
-import {HomePage} from "./home/home.page";
-import {RecordingInfoPage} from "./recording/recording-info.page";
-import {RecordingClassicPage} from "./recording/recording-classic.page";
+import {HomePage} from "./page/home/home.page";
+import {RecordingInfoPage} from "./page/recording/recording-info.page";
+import {RecordingClassicPage} from "./page/recording/recording-classic.page";
+import {RecordsPage} from "./page/records/records.page";
 
 
 @NgModule({
@@ -25,6 +26,8 @@ import {RecordingClassicPage} from "./recording/recording-classic.page";
 		// Recording
 		RecordingInfoPage,
 		RecordingClassicPage,
+		// Records
+		RecordsPage,
 		// Modals
 		SelectLangageModal,
 		SelectSpeakerModal,
