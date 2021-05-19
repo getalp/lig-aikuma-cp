@@ -36,7 +36,7 @@
     "css-element-queries": "^1.2.3",
     "rxjs": "~6.6.0",
     "tslib": "^2.0.0",
-    "waveform-data": "^4.0.0",
+    "waveform-data": "^4.1.0",
     "zone.js": "~0.10.2"
   },
   "devDependencies": {

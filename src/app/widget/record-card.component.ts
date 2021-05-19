@@ -24,9 +24,11 @@ import {formatDuration} from "../utils";
 })
 export class RecordCardComponent {
 
-	public internalRecord: Record = null;
-	public speakerDetails: string = null;
-	public recordLanguage: string = null;
+	formatDuration = formatDuration;
+
+	internalRecord: Record = null;
+	speakerDetails: string = null;
+	recordLanguage: string = null;
 
 	constructor(
 		private speakerService: SpeakerService,
@@ -36,10 +38,6 @@ export class RecordCardComponent {
 	@Input()
 	set record(record: Record) {
 		this.internalSetRecord(record).then();
-	}
-
-	formatDuration(dur: number): string {
-		return formatDuration(dur);
 	}
 
 	private async internalSetRecord(record: Record) {

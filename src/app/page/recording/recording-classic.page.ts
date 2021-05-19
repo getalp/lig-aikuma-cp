@@ -1,6 +1,6 @@
 import {PluginListenerHandle} from "@capacitor/core/types/definitions";
 import {Component, NgZone, OnDestroy, OnInit} from '@angular/core';
-import {ActivatedRoute} from "@angular/router";
+import {ActivatedRoute, Router} from "@angular/router";
 import {Location} from "@angular/common";
 
 import {Toast} from "@capacitor/toast";
@@ -34,7 +34,8 @@ export class RecordingClassicPage implements OnInit, OnDestroy {
 		private route: ActivatedRoute,
 		private recordService: RecordService,
 		private iso639Service: Iso639Service,
-		private location: Location
+		private location: Location,
+		private router: Router
 	) { }
 
 	async ngOnInit() {
@@ -103,6 +104,8 @@ export class RecordingClassicPage implements OnInit, OnDestroy {
 		});
 
 		this.location.back();
+		// TODO: Fix the following line
+		// await this.router.navigate(["record", this.record.dirName]);
 
 	}
 

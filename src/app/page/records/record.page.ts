@@ -2,7 +2,7 @@ import {Component, OnInit} from '@angular/core';
 import {RecordService} from "../../service/record.service";
 import {Iso639Service} from "../../service/iso-639.service";
 import {ActivatedRoute} from "@angular/router";
-import {Record} from "../../record";
+import {Record, RecordType} from "../../record";
 
 
 @Component({
@@ -11,6 +11,8 @@ import {Record} from "../../record";
 	styleUrls: ['./record.page.scss'],
 })
 export class RecordPage implements OnInit {
+
+	RecordType = RecordType
 
 	record: Record;
 

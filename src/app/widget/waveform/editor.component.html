@@ -1,10 +1,10 @@
-<div #container [class.waveform-editor-container]>
+<div #container class="waveform-editor-container">
 
 	<canvas #canvas
 			(touchstart)="canvasTouchStart($event)"
 			(touchmove)="canvasTouchMove($event)"></canvas>
 
-	<div [class.waveform-editor-cursor]
+	<div class="waveform-editor-cursor"
 		 [style.left.px]="cursorPosition"
 		 [style.display]="isPlaying() ? '' : 'none'"></div>
 

@@ -11,4 +11,18 @@
 
 	<app-record-card [record]="record"></app-record-card>
 
+	<app-waveform-editor *ngIf="record != null" [uri]="record.getAacUri()" [style.height.px]="200" [style.width]="'100%'"></app-waveform-editor>
+
+	<ion-list *ngIf="record != null && record.type == RecordType.Raw">
+		<!--<ion-list-header>
+			<h5></h5>
+		</ion-list-header>
+		<ion-item button *ngFor="let child of group.children" [routerLink]="child.router == null ? null : child.router.link">
+			<ion-icon slot="start" [ios]="child.icon + '-outline'" [md]="child.icon" size="large"></ion-icon>
+			<ion-label>
+				<h2>{{ child.title }}</h2>
+			</ion-label>
+		</ion-item>-->
+	</ion-list>
+
 </ion-content>

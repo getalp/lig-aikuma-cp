@@ -5,13 +5,15 @@ import {LangageSelectComponent} from "./langage-select.component";
 import {IonicModule} from "@ionic/angular";
 import {SpeakerSelectComponent} from "./speaker-input.component";
 import {RecordCardComponent} from "./record-card.component";
+import {WaveformEditorComponent} from "./waveform/editor.component";
 
 
 @NgModule({
 	declarations: [
 		LangageSelectComponent,
 		SpeakerSelectComponent,
-		RecordCardComponent
+		RecordCardComponent,
+		WaveformEditorComponent
 	],
 	imports: [
 		CommonModule,
@@ -20,7 +22,8 @@ import {RecordCardComponent} from "./record-card.component";
 	exports: [
 		LangageSelectComponent,
 		SpeakerSelectComponent,
-		RecordCardComponent
+		RecordCardComponent,
+		WaveformEditorComponent
 	]
 })
 export class WidgetModule {

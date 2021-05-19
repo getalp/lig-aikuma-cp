@@ -1,10 +1,11 @@
-import {Component, Input, ElementRef, OnInit, OnDestroy, AfterViewInit, ViewChild} from '@angular/core';
+import {Component, Input, ElementRef, OnInit, OnDestroy, AfterViewInit, ViewChild} from "@angular/core";
 
-import {Filesystem, Directory} from '@capacitor/filesystem';
+import {Filesystem} from "@capacitor/filesystem";
 
 import {ResizeSensor} from "css-element-queries";
-import {WaveformData} from 'waveform-data';
-import {base64ToBuffer} from "../utils";
+import WaveformData from "waveform-data";
+import {base64ToBuffer} from "../../utils";
+
 
 @Component({
 	selector: 'app-waveform-editor',
@@ -21,27 +22,27 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 
 	@ViewChild("canvas")
 	private canvasRef: ElementRef;
-	private canvas?: HTMLCanvasElement;
-	private ctx?: CanvasRenderingContext2D;
-	private resizeSensor?: ResizeSensor;
+	private canvas: HTMLCanvasElement;
+	private ctx: CanvasRenderingContext2D;
+	private resizeSensor: ResizeSensor;
 
 	// Audio data
 	private audioCtx: AudioContext;
-	private audioArray?: ArrayBuffer;
-	private audioBuffer?: AudioBuffer;
-	private waveformData?: WaveformData;
+	private audioArray: ArrayBuffer;
+	private audioBuffer: AudioBuffer;
+	private waveformData: WaveformData;
 	private waveformMaxSample: number = 0;
 
 	// Audio playing data
-	private audioBufferSource?: AudioBufferSourceNode;
-	private audioBufferSourceEndPromise?: Promise<void>;
-	private startTime?: number;
-	private lastTime?: number;
+	private audioBufferSource: AudioBufferSourceNode;
+	private audioBufferSourceEndPromise: Promise<void>;
+	private startTime: number;
+	private lastTime: number;
 	private updateCursorHandle?: number;
 	public cursorPosition: number = 0;
 
 	// Last data
-	private lastPath?: string;
+	private lastUri: string;
 	private lastTouchDist: number = 0;
 
 	// Sizes and zoom
@@ -75,36 +76,32 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 	}
 
 	@Input()
-	set path(path: string) {
-		this.load(path);
+	set uri(uri: string) {
+		this.load(uri);
 	}
 
-	@Input()
-	set url(url: string) {
-		this.loadUrl(url);
-	}
-
-	load(path: string) {
-		if (path !== this.lastPath || this.audioArray == null) {
-			this.lastPath = path;
-			Filesystem.readFile({
-				path: path,
-				directory: Directory.Documents
-			}).then(res => {
-				return base64ToBuffer(res.data);
-			}).then(buf => {
-				this.loadAudioArray(buf);
-			});
+	load(uri: string) {
+		if (uri !== this.lastUri || this.audioArray == null) {
+			if (uri.startsWith("file://")) {
+				Filesystem.readFile({
+					path: uri
+				}).then(res => {
+					return base64ToBuffer(res.data);
+				}).then(buf => {
+					this.lastUri = uri;
+					this.loadAudioArray(buf);
+				});
+			} else if (uri.startsWith("http://") || uri.startsWith("https://")) {
+				fetch(uri)
+					.then(res => res.arrayBuffer())
+					.then(buf => {
+						this.lastUri = uri;
+						this.loadAudioArray(buf);
+					})
+			} else {
+				throw "Invalid URI protocol for audio file.";
+			}
 		}
-	}
-
-	loadUrl(url: string) {
-		this.lastPath = null;
-		fetch(url)
-			.then(res => res.arrayBuffer())
-			.then(buf => {
-				this.loadAudioArray(buf);
-			})
 	}
 
 	private loadAudioArray(buf: ArrayBuffer) {
