@@ -5,31 +5,34 @@ import {RecordingInfoPage} from "./page/recording/recording-info.page";
 import {HomePage} from "./page/home/home.page";
 import {RecordingClassicPage} from "./page/recording/recording-classic.page";
 import {RecordsPage} from "./page/records/records.page";
+import {RecordPage} from "./page/records/record.page";
 
 
 const routes: Routes = [
 	{
-		path: '',
-		redirectTo: 'home',
-		pathMatch: 'full'
+		path: "",
+		redirectTo: "home",
+		pathMatch: "full"
 	},
 	{
-		path: 'home',
+		path: "home",
 		component: HomePage
-		// loadChildren: () => import('./home/home.module').then(m => m.HomePageModule)
 	},
 	{
-		path: 'recording/classic/:recordDirName',
+		path: "recording/classic/:recordDirName",
 		component: RecordingClassicPage
 	},
 	{
-		path: 'recording',
+		path: "recording",
 		component: RecordingInfoPage
-		// loadChildren: () => import('./recording/recording.module').then(m => m.RecordingPageModule)
 	},
 	{
-		path: 'records',
+		path: "records",
 		component: RecordsPage
+	},
+	{
+		path: "record/:recordDirName",
+		component: RecordPage
 	}
 ];
 

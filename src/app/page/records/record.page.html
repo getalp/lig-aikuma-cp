@@ -1,0 +1,14 @@
+<ion-header translucent>
+	<ion-toolbar>
+		<ion-buttons slot="start">
+			<ion-back-button defaultHref="/records"></ion-back-button>
+		</ion-buttons>
+		<ion-title *ngIf="record != null">{{ record.date.toLocaleString() }}</ion-title>
+	</ion-toolbar>
+</ion-header>
+
+<ion-content fullscreen class="ion-padding">
+
+	<app-record-card [record]="record"></app-record-card>
+
+</ion-content>

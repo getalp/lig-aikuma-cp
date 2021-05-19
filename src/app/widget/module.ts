@@ -4,12 +4,14 @@ import {CommonModule} from '@angular/common';
 import {LangageSelectComponent} from "./langage-select.component";
 import {IonicModule} from "@ionic/angular";
 import {SpeakerSelectComponent} from "./speaker-input.component";
+import {RecordCardComponent} from "./record-card.component";
 
 
 @NgModule({
 	declarations: [
 		LangageSelectComponent,
-		SpeakerSelectComponent
+		SpeakerSelectComponent,
+		RecordCardComponent
 	],
 	imports: [
 		CommonModule,
@@ -17,7 +19,8 @@ import {SpeakerSelectComponent} from "./speaker-input.component";
 	],
 	exports: [
 		LangageSelectComponent,
-		SpeakerSelectComponent
+		SpeakerSelectComponent,
+		RecordCardComponent
 	]
 })
 export class WidgetModule {

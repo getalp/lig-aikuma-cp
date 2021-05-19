@@ -9,13 +9,7 @@
 
 <ion-content fullscreen class="ion-padding">
 
-	<ion-card *ngIf="record != null && record.speaker != null">
-		<ion-card-header>
-			<ion-card-title>{{ record.speaker.name }}</ion-card-title>
-			<ion-card-subtitle>{{ speakerDetails }}</ion-card-subtitle>
-		</ion-card-header>
-		<ion-card-content>Recording in {{ recordingDetails }}</ion-card-content>
-	</ion-card>
+	<app-record-card [record]="record"></app-record-card>
 
 	<div style="width: 90%; margin: 25px auto 0 auto;">
 

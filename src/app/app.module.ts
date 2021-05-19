@@ -16,6 +16,7 @@ import {HomePage} from "./page/home/home.page";
 import {RecordingInfoPage} from "./page/recording/recording-info.page";
 import {RecordingClassicPage} from "./page/recording/recording-classic.page";
 import {RecordsPage} from "./page/records/records.page";
+import {RecordPage} from "./page/records/record.page";
 
 
 @NgModule({
@@ -28,6 +29,7 @@ import {RecordsPage} from "./page/records/records.page";
 		RecordingClassicPage,
 		// Records
 		RecordsPage,
+		RecordPage,
 		// Modals
 		SelectLangageModal,
 		SelectSpeakerModal,

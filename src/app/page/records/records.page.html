@@ -10,7 +10,7 @@
 <ion-content fullscreen>
 
 	<ion-list>
-		<ion-item button *ngFor="let record of records">
+		<ion-item button *ngFor="let record of records" [routerLink]="'/record/' + record[0].dirName">
 			<ion-label>
 				<h2>{{ record[0].date.toLocaleString() }}<span *ngIf="record[0].duration != null">&nbsp;({{ formatDuration(record[0].duration) }})</span></h2>
 				<h4>{{ record[0].speaker.name }} (recorded in {{ (record[1] | async).printName }})</h4>
