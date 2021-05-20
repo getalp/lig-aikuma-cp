@@ -80,7 +80,7 @@ export class RecordService {
 
 	async newRawRecord(record: Record) {
 
-		if (record.type !== RecordType.Raw || record.parent != null) {
+		if (!record.isRoot()) {
 			throw "You can only use this function for raw records, without parent.";
 		}
 
@@ -135,8 +135,9 @@ export class RecordService {
 
 	async deleteRecord(record: Record): Promise<void> {
 
-		if (record.type !== RecordType.Raw || record.parent != null) {
+		if (!record.isRoot()) {
 			throw "You must use the raw record without parent to delete the directory.";
+			// TODO: Add support for removing "Derived records".
 		}
 
 		await Filesystem.rmdir({

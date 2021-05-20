@@ -11,18 +11,33 @@
 
 	<app-record-card [record]="record"></app-record-card>
 
-	<app-waveform-editor *ngIf="record != null" [uri]="record.getAacUri()" [style.height.px]="200" [style.width]="'100%'"></app-waveform-editor>
+	<app-waveform-editor *ngIf="record != null"
+						 [uri]="record.getAacUri()"
+						 [style.margin]="'20px 0 0 0'"
+						 [style.height.px]="80"
+						 [style.width]="'100%'"></app-waveform-editor>
 
 	<ion-list *ngIf="record != null && record.type == RecordType.Raw">
-		<!--<ion-list-header>
-			<h5></h5>
+		<ion-list-header>
+			<h5>Derived records</h5>
 		</ion-list-header>
-		<ion-item button *ngFor="let child of group.children" [routerLink]="child.router == null ? null : child.router.link">
-			<ion-icon slot="start" [ios]="child.icon + '-outline'" [md]="child.icon" size="large"></ion-icon>
+		<ion-item>
 			<ion-label>
-				<h2>{{ child.title }}</h2>
+				<h2>No derivative record</h2>
 			</ion-label>
-		</ion-item>-->
+		</ion-item>
+	</ion-list>
+
+	<ion-list>
+		<ion-list-header>
+			<h5>Actions</h5>
+		</ion-list-header>
+		<ion-item button (click)="onDeleteClick()">
+			<ion-icon slot="start" ios="close-outline" md="close"></ion-icon>
+			<ion-label>
+				<h2>Delete</h2>
+			</ion-label>
+		</ion-item>
 	</ion-list>
 
 </ion-content>

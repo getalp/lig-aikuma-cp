@@ -26,6 +26,14 @@ export class Record {
 		return new Record(null, speaker, language, RecordType.Raw);
 	}
 
+	isRoot(): boolean {
+		return this.type == RecordType.Raw && this.parent == null;
+	}
+
+	isDerived(): boolean {
+		return !this.isRoot();
+	}
+
 	getMetaPath(): string {
 		return this.basePath + ".json";
 	}

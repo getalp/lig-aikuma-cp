@@ -3,6 +3,7 @@ import {RecordService} from "../../service/record.service";
 import {Record} from "../../record";
 import {Iso639Service, Language} from "../../service/iso-639.service";
 import {formatDuration} from "../../utils";
+import {ViewWillEnter} from "@ionic/angular";
 
 
 @Component({
@@ -10,7 +11,7 @@ import {formatDuration} from "../../utils";
 	templateUrl: './records.page.html',
 	styleUrls: ['./records.page.scss'],
 })
-export class RecordsPage implements OnInit {
+export class RecordsPage implements OnInit, ViewWillEnter {
 
 	records: [Record, Promise<Language>][];
 
@@ -19,7 +20,11 @@ export class RecordsPage implements OnInit {
 		private iso639Service: Iso639Service
 	) { }
 
-	ngOnInit() {
+	ngOnInit(): void {
+		this.refresh().then();
+	}
+
+	ionViewWillEnter(): void {
 		this.refresh().then();
 	}
 
