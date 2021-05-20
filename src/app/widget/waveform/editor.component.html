@@ -16,6 +16,6 @@
 
 	<ion-button (click)="play()">Start</ion-button>
 	<ion-button (click)="pause()" *ngIf="isPlaying()">Pause</ion-button>
-	<ion-button (click)="stop()">Stop</ion-button>
+	<ion-button (click)="stop()" *ngIf="isPlaying()">Stop</ion-button>
 
 </div>

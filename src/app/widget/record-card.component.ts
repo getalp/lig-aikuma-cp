@@ -18,6 +18,7 @@ import {formatDuration} from "../utils";
 				<p>Recorded in: {{ recordLanguage }}</p>
 				<p>Date: {{ internalRecord.date.toLocaleString() }}</p>
 				<p>Duration: {{ formatDuration(internalRecord.duration) }}</p>
+				<p *ngIf="internalRecord.notes != null && internalRecord.notes.length !== 0">Notes: {{ internalRecord.notes }}</p>
 			</ion-card-content>
 		</ion-card>
 	`
