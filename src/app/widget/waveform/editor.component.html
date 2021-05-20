@@ -5,19 +5,17 @@
 			(touchmove)="canvasTouchMove($event)"></canvas>
 
 	<div class="waveform-editor-cursor"
-		 [style.left.px]="cursorPosition"
-		 [style.display]="isPlaying() ? '' : 'none'"></div>
+		 *ngIf="isPlaying()"
+		 [style.left.px]="cursorPosition"></div>
 
-	<!-- [style.transition]="'left 0.2s'" -->
+</div>
 
-	<div [style.position]="'absolute'"
-		 [style.left.px]="20"
-		 [style.top.px]="0">
+<div [style.position]="'absolute'"
+	 [style.left.px]="0"
+	 [style.top.px]="0">
 
-		<ion-button (click)="play()">Start</ion-button>
-		<ion-button (click)="pause()">Pause</ion-button>
-		<ion-button (click)="stop()">Stop</ion-button>
-
-	</div>
+	<ion-button (click)="play()">Start</ion-button>
+	<ion-button (click)="pause()" *ngIf="isPlaying()">Pause</ion-button>
+	<ion-button (click)="stop()">Stop</ion-button>
 
 </div>
