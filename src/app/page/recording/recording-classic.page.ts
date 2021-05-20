@@ -34,7 +34,6 @@ export class RecordingClassicPage implements OnInit, OnDestroy {
 		private route: ActivatedRoute,
 		private recordService: RecordService,
 		private iso639Service: Iso639Service,
-		private location: Location,
 		private router: Router
 	) { }
 
@@ -103,9 +102,9 @@ export class RecordingClassicPage implements OnInit, OnDestroy {
 			text: "Successfully saved the audio."
 		});
 
-		this.location.back();
-		// TODO: Fix the following line
-		// await this.router.navigate(["record", this.record.dirName]);
+		await this.router.navigateByUrl("/record/" + this.record.dirName, {
+			replaceUrl: true
+		});
 
 	}
 
