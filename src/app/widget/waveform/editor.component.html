@@ -4,9 +4,17 @@
 			(touchstart)="canvasTouchStart($event)"
 			(touchmove)="canvasTouchMove($event)"></canvas>
 
-	<div class="waveform-editor-cursor"
+	<div class="waveform-editor-cursor live"
 		 *ngIf="isPlaying()"
 		 [style.left.px]="cursorPosition"></div>
+
+	<div class="waveform-editor-cursor start"
+		 *ngIf="isLoaded()"
+		 [style.left.px]="startCursorPosition"></div>
+
+	<div class="waveform-editor-cursor marker"
+		 *ngFor="let marker of markers"
+		 [style.left.px]="marker[1]"></div>
 
 </div>
 

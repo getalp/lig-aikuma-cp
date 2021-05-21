@@ -36,10 +36,17 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 	// Audio playing data
 	private audioBufferSource: AudioBufferSourceNode;
 	private audioBufferSourceEndPromise: Promise<void>;
-	private startTime: number;
-	private lastTime: number;
+	private startRefTime: number = 0;
+	private refTime: number | null = null;
+	private refRealTime: number | null = null;
 	private updateCursorHandle?: number;
+
+	// Exposed cursors positions;
+	public startCursorPosition: number = 0;
 	public cursorPosition: number = 0;
+
+	// Markers
+	public markers: [number, number][] = [];
 
 	// Last data
 	private lastUri: string;
@@ -77,45 +84,10 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 
 	@Input()
 	set uri(uri: string) {
-		this.load(uri);
+		this.load(uri).then();
 	}
 
-	load(uri: string) {
-		if (uri !== this.lastUri || this.audioArray == null) {
-			if (uri.startsWith("file://")) {
-				Filesystem.readFile({
-					path: uri
-				}).then(res => {
-					return base64ToBuffer(res.data);
-				}).then(buf => {
-					this.lastUri = uri;
-					this.loadAudioArray(buf);
-				});
-			} else if (uri.startsWith("http://") || uri.startsWith("https://")) {
-				fetch(uri)
-					.then(res => res.arrayBuffer())
-					.then(buf => {
-						this.lastUri = uri;
-						this.loadAudioArray(buf);
-					})
-			} else {
-				throw "Invalid URI protocol for audio file.";
-			}
-		}
-	}
-
-	private loadAudioArray(buf: ArrayBuffer) {
-		this.stop().then(() => {
-			this.audioArray = buf;
-			this.waveformData = null; // Reset the waveform data to force computation.
-			this.audioBuffer = null;
-			if (this.audioCtx != null) {
-				this.draw();
-			}
-		});
-	}
-
-	draw() {
+	private draw() {
 
 		if (this.audioCtx == null) {
 			throw "Can't draw since this component is not initialized.";
@@ -187,6 +159,8 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 
 					this.waveformData = waveformData;
 					this.audioBuffer = audioBuffer;
+
+					this.setStartTime(this.startRefTime);
 
 					this.waveformMaxSample = 0;
 
@@ -284,95 +258,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		this.canvas.width = Math.floor(this.parentWidth * this.canvasZoom);
 		this.canvas.height = this.parentHeight;
 		this.updateCursor();
-	}
-
-	isLoaded(): boolean {
-		return this.waveformData != null;
-	}
-
-	isPlaying(): boolean {
-		// Retourne true si la lecture du son est en cours.
-		return this.startTime != null;
-	}
-
-	isPaused(): boolean {
-		// Retourne true si la lecture du son est en cours mais a été mis en pause.
-		return this.startTime != null && this.lastTime == null;
-	}
-
-	play(): Promise<void> {
-
-		// Si la lecture est en cours mais pas en pause, on stop au préalable.
-		if (this.startTime != null && this.lastTime != null) {
-			return this.stop().then(() => {
-				return this.play();
-			});
-		}
-
-		if (this.audioBuffer != null) {
-
-			const source = this.audioCtx.createBufferSource();
-			this.audioBufferSource = source;
-
-			source.connect(this.audioCtx.destination);
-			source.buffer = this.audioBuffer;
-
-			this.audioBufferSourceEndPromise = new Promise((resolve, _reject) => {
-				source.addEventListener("ended", () => {
-					// On force l'arrêt uniquement si la source n'a pas été mise en pause.
-					if (this.lastTime != null) {
-						this.stop().then(() => {
-							resolve();
-						});
-					} else {
-						resolve();
-					}
-				});
-			});
-
-			if (this.startTime == null) {
-				this.startTime = 0;
-			}
-
-			source.start(null, this.startTime);
-			this.lastTime = this.audioCtx.currentTime;
-			this.scheduleUpdateCursor();
-
-			return Promise.resolve();
-
-		} else {
-			return Promise.reject("No audio buffer to play.");
-		}
-
-	}
-
-	pause(): Promise<void> {
-		if (this.startTime != null && this.lastTime != null) {
-			this.stopUpdateCursor();
-			this.startTime += this.audioCtx.currentTime - this.lastTime;
-			this.lastTime = null;
-			return this.stopAudioBufferSource();
-		} else {
-			return Promise.resolve();
-		}
-	}
-
-	stop(): Promise<void> {
-		if (this.startTime != null) {
-			const wasPaused = this.lastTime == null;
-			this.startTime = null;
-			this.lastTime = null;
-			if (wasPaused) {
-				this.updateCursor();
-				return Promise.resolve();
-			} else {
-				this.stopUpdateCursor();
-				this.updateCursor();
-				return this.stopAudioBufferSource();
-			}
-		} else {
-			return Promise.resolve();
-		}
+		this.updateStartCursor();
 	}
 
 	private stopAudioBufferSource(): Promise<void> {
@@ -387,7 +273,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 	private scheduleUpdateCursor() {
 		this.updateCursorHandle = window.setInterval(() => {
 			this.updateCursor();
-		}, 50);
+		}, 10);
 	}
 
 	private stopUpdateCursor() {
@@ -396,13 +282,166 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 	}
 
 	private updateCursor() {
-		if (this.startTime != null) {
-			const realTime = this.startTime + (this.lastTime == null ? 0 : (this.audioCtx.currentTime - this.lastTime));
+		if (this.refTime != null && this.audioBuffer != null) {
+			const realTime = this.refTime + (this.refRealTime == null ? 0 : (this.audioCtx.currentTime - this.refRealTime));
 			const ratio = realTime / this.audioBuffer.duration;
 			this.cursorPosition = ratio * this.canvas.width;
 		} else {
 			this.cursorPosition = 0;
 		}
+	}
+
+	private updateStartCursor() {
+		if (this.audioBuffer != null) {
+			this.startCursorPosition = this.startRefTime / this.audioBuffer.duration * this.canvas.width;
+		} else {
+			this.startCursorPosition = 0;
+		}
+	}
+
+	// Public API //
+
+	async load(uri: string) {
+		if (uri !== this.lastUri || this.audioArray == null) {
+			if (uri.startsWith("file://") || uri.startsWith("/")) {
+				await Filesystem.readFile({
+					path: uri
+				}).then(res => {
+					return base64ToBuffer(res.data);
+				}).then(buf => {
+					this.lastUri = uri;
+					return this.loadAudioArray(buf);
+				});
+			} else if (uri.startsWith("http://") || uri.startsWith("https://")) {
+				await fetch(uri)
+					.then(res => res.arrayBuffer())
+					.then(buf => {
+						this.lastUri = uri;
+						return this.loadAudioArray(buf);
+					});
+			} else {
+				throw "Invalid URI protocol for audio file (" + uri + ").";
+			}
+		}
+	}
+
+	async loadAudioArray(buf: ArrayBuffer) {
+		await this.stop();
+		this.audioArray = buf;
+		this.waveformData = null; // Reset the waveform data to force computation.
+		this.audioBuffer = null;
+		if (this.audioCtx != null) {
+			this.draw();
+		}
+	}
+
+	isLoaded(): boolean {
+		return this.waveformData != null;
+	}
+
+	isPlaying(): boolean {
+		// Retourne true si la lecture du son est en cours.
+		return this.refTime != null;
+	}
+
+	isPaused(): boolean {
+		// Retourne true si la lecture du son est en cours mais a été mis en pause.
+		return this.refTime != null && this.refRealTime == null;
+	}
+
+	async play() {
+
+		// Si la lecture est en cours mais pas en pause, on stop au préalable.
+		if (this.refTime != null && this.refRealTime != null) {
+			await this.stop();
+		}
+
+		if (this.audioBuffer != null) {
+
+			const source = this.audioCtx.createBufferSource();
+			this.audioBufferSource = source;
+
+			source.connect(this.audioCtx.destination);
+			source.buffer = this.audioBuffer;
+
+			this.audioBufferSourceEndPromise = new Promise((resolve, _reject) => {
+				source.addEventListener("ended", async () => {
+					// On force l'arrêt uniquement si la source n'a pas été mise en pause.
+					if (this.refRealTime != null) {
+						await this.stop();
+					}
+					resolve();
+				});
+			});
+
+			if (this.refTime == null) {
+				this.refTime = this.startRefTime;
+			}
+
+			source.start(null, this.refTime);
+			this.refRealTime = this.audioCtx.currentTime;
+			this.scheduleUpdateCursor();
+
+		} else {
+			throw "No audio buffer to play.";
+		}
+
+	}
+
+	async pause() {
+		if (this.refTime != null && this.refRealTime != null) {
+			this.stopUpdateCursor();
+			this.refTime += this.audioCtx.currentTime - this.refRealTime;
+			this.refRealTime = null;
+			await this.stopAudioBufferSource();
+		}
+	}
+
+	async stop(): Promise<void> {
+		if (this.refTime != null) {
+			const wasPaused = (this.refRealTime == null);
+			this.refTime = null;
+			this.refRealTime = null;
+			if (wasPaused) {
+				this.updateCursor();
+			} else {
+				this.stopUpdateCursor();
+				this.updateCursor();
+				await this.stopAudioBufferSource();
+			}
+		}
+	}
+
+	async setTime(duration: number) {
+		const wasPlaying = (this.refTime != null && this.refRealTime != null);
+		await this.stop();
+		this.refTime = duration;
+		this.refRealTime = null;
+		if (wasPlaying) {
+			await this.play();
+		}
+
+	}
+
+	setStartTime(time: number) {
+
+		if (time < 0) {
+			time = 0;
+		} else if (this.audioBuffer != null && time > this.audioBuffer.duration) {
+			time = this.audioBuffer.duration;
+		}
+
+		this.startRefTime = time;
+		this.updateStartCursor();
+
+	}
+
+	getStartTime(): number {
+		return this.startRefTime;
+	}
+
+	moveStartTime(delta: number) {
+		this.setStartTime(this.startRefTime + delta);
 	}
 
 }

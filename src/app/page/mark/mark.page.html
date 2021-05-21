@@ -1,0 +1,26 @@
+<ion-header translucent>
+	<ion-toolbar>
+		<ion-buttons slot="start">
+			<ion-back-button [defaultHref]="record == null ? '/mark-info' : '/record/' + record.dirName"></ion-back-button>
+		</ion-buttons>
+		<ion-title>Marking</ion-title>
+	</ion-toolbar>
+</ion-header>
+
+<ion-content fullscreen *ngIf="record != null">
+
+	<app-waveform-editor #waveform
+						 [uri]="record.getAacUri()"
+						 [style.height]="'50%'"
+						 [style.width]="'100%'"></app-waveform-editor>
+
+	<div class="mark-page-control-buttons">
+		<ion-button fill="clear" (touchstart)="backwardStart()" (touchend)="actionStop()">
+			<ion-icon name="play-back-outline" size="large"></ion-icon>
+		</ion-button>
+		<ion-button fill="clear" (touchstart)="forwardStart()" (touchend)="actionStop()">
+			<ion-icon name="play-forward-outline" size="large"></ion-icon>
+		</ion-button>
+	</div>
+
+</ion-content>

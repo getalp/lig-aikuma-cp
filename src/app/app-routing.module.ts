@@ -6,6 +6,7 @@ import {HomePage} from "./page/home/home.page";
 import {RecordingClassicPage} from "./page/recording/recording-classic.page";
 import {RecordsPage} from "./page/records/records.page";
 import {RecordPage} from "./page/records/record.page";
+import {MarkPage} from "./page/mark/mark.page";
 
 
 const routes: Routes = [
@@ -33,6 +34,10 @@ const routes: Routes = [
 	{
 		path: "record/:recordDirName",
 		component: RecordPage
+	},
+	{
+		path: "mark/:recordDirName",
+		component: MarkPage
 	}
 ];
 

@@ -19,7 +19,19 @@
 	position: absolute;
 	width: 2px;
 	height: 100%;
-	background-color: #ababab;
 	top: 0;
 	transform: translate(-50%, 0);
+}
+
+.waveform-editor-cursor.live {
+	background-color: #387ffe;
+}
+
+.waveform-editor-cursor.start {
+	background-color: #ababab;
+	transition: left 0.2s;
+}
+
+.waveform-editor-cursor.marker {
+	background-color: #8dbf13;
 }

@@ -15,6 +15,9 @@ export class Record {
 
 	public hasAudio: boolean = false;
 
+	public markersReady: boolean = false;
+	public markers: RecordMarker[] = [];
+
 	constructor(
 		public parent: Record,
 		public speaker: Speaker,
@@ -27,7 +30,7 @@ export class Record {
 	}
 
 	isRoot(): boolean {
-		return this.type == RecordType.Raw && this.parent == null;
+		return this.parent == null;
 	}
 
 	isDerived(): boolean {
@@ -55,13 +58,26 @@ export enum RecordType {
 }
 
 
+export class RecordMarker {
+
+	constructor(
+		public time: number
+	) { }
+
+}
+
+
 export interface RecordSerialized {
 	"speaker": SpeakerSerialized,
 	"language": string,
 	"type": string,
 	"date": string,
 	"notes": string,
-	"duration": number | null
+	"duration": number | null,
+	"markers_ready": boolean,
+	"markers": {
+		"time": number
+	}[]
 }
 
 
@@ -72,7 +88,11 @@ export function serializeRecord(record: Record): RecordSerialized {
 		"type": record.type,
 		"date": record.date.toISOString(),
 		"notes": record.notes,
-		"duration": record.duration
+		"duration": record.duration,
+		"markers_ready": record.markersReady,
+		"markers": record.markers.map(m => {
+			return { "time": m.time };
+		})
 	};
 }
 
@@ -83,5 +103,9 @@ export function deserializeRecord(parent: Record, raw: RecordSerialized): Record
 	record.date = new Date(raw["date"]);
 	record.notes = raw["notes"];
 	record.duration = raw["duration"];
+	record.markersReady = Boolean(raw["markers_ready"]);
+	if (Array.isArray(raw["markers"])) {
+		raw["markers"].forEach(m => record.markers.push(new RecordMarker(m["time"])));
+	}
 	return record;
 }

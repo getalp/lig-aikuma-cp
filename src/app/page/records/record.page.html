@@ -7,17 +7,16 @@
 	</ion-toolbar>
 </ion-header>
 
-<ion-content fullscreen class="ion-padding">
+<ion-content fullscreen class="ion-padding" *ngIf="record != null">
 
 	<app-record-card [record]="record"></app-record-card>
 
-	<app-waveform-editor *ngIf="record != null"
-						 [uri]="record.getAacUri()"
+	<app-waveform-editor [uri]="record.getAacUri()"
 						 [style.margin]="'20px 0 0 0'"
 						 [style.height.px]="80"
 						 [style.width]="'100%'"></app-waveform-editor>
 
-	<ion-list *ngIf="record != null && record.type == RecordType.Raw">
+	<ion-list *ngIf="record.type == RecordType.Raw">
 		<ion-list-header>
 			<h5>Derived records</h5>
 		</ion-list-header>
@@ -32,6 +31,12 @@
 		<ion-list-header>
 			<h5>Actions</h5>
 		</ion-list-header>
+		<ion-item button [color]="record.markersReady ? 'success' : 'warning'" [routerLink]="'/mark/' + record.dirName">
+			<ion-icon slot="start" ios="bookmarks-outline" md="bookmarks"></ion-icon>
+			<ion-label>
+				<h2>Marking ({{ record.markersReady ? "already done" : "missing" }})</h2>
+			</ion-label>
+		</ion-item>
 		<ion-item button (click)="onDeleteClick()">
 			<ion-icon slot="start" ios="close-outline" md="close"></ion-icon>
 			<ion-label>
