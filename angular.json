@@ -32,7 +32,11 @@
               }
             ],
             "styles": ["src/theme/variables.scss", "src/global.scss"],
-            "scripts": []
+            "scripts": [],
+            "allowedCommonJsDependencies": [
+				"css-element-queries",
+				"waveform-data"
+			]
           },
           "configurations": {
             "production": {

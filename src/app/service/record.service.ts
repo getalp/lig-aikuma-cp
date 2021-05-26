@@ -4,7 +4,7 @@ import {Filesystem, ReaddirResult, StatResult, Encoding} from '@capacitor/filesy
 import {AikumaNative} from "../native";
 
 import {computePath, getCommonOptions} from "../files";
-import {deserializeRecord, Record, RecordType, serializeRecord} from "../record";
+import {deserializeRecord, Record, serializeRecord} from "../record";
 import {formatTwoDigit} from "../utils";
 
 

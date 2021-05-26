@@ -1,4 +1,3 @@
-import {Iso639Service, Language} from "./service/iso-639.service";
 
 export enum Gender {
 	Male = "male",
