@@ -20,7 +20,7 @@
 	width: 2px;
 	height: 100%;
 	top: 0;
-	transform: translate(-50%, 0);
+	transform: translate(-1px, 0);
 }
 
 .waveform-editor-cursor.live {
@@ -33,5 +33,14 @@
 }
 
 .waveform-editor-cursor.marker {
-	background-color: #8dbf13;
+	border-width: 2px;
+	border-color: rgba(47, 224, 34, 0.6);
+	border-style: solid dashed solid dashed;
+	transform: none;
+	background-color: transparent;
+	transition: background-color .2s;
+}
+
+.waveform-editor-cursor.marker.hover {
+	background-color: rgba(47, 224, 34, 0.15);
 }

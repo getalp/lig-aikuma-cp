@@ -46,7 +46,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 	public cursorPosition: number = 0;
 
 	// Markers
-	public markers: [number, number][] = [];
+	public markers: InternalWaveformMarker[] = [];
 
 	// Last data
 	private lastUri: string;
@@ -259,6 +259,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		this.canvas.height = this.parentHeight;
 		this.updateCursor();
 		this.updateStartCursor();
+		this.updateMarkers();
 	}
 
 	private stopAudioBufferSource(): Promise<void> {
@@ -269,6 +270,18 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		this.audioBufferSourceEndPromise = null;
 		return endPromise;
 	}
+
+	// Common for all cursors //
+
+	private computeCursorOffset(time: number): number {
+		if (this.audioBuffer != null) {
+			return time / this.audioBuffer.duration * this.canvas.width;
+		} else {
+			return 0;
+		}
+	}
+
+	// Internal Cursor //
 
 	private scheduleUpdateCursor() {
 		this.updateCursorHandle = window.setInterval(() => {
@@ -284,18 +297,32 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 	private updateCursor() {
 		if (this.refTime != null && this.audioBuffer != null) {
 			const realTime = this.refTime + (this.refRealTime == null ? 0 : (this.audioCtx.currentTime - this.refRealTime));
-			const ratio = realTime / this.audioBuffer.duration;
-			this.cursorPosition = ratio * this.canvas.width;
+			this.cursorPosition = this.computeCursorOffset(realTime);
 		} else {
 			this.cursorPosition = 0;
 		}
 	}
 
 	private updateStartCursor() {
-		if (this.audioBuffer != null) {
-			this.startCursorPosition = this.startRefTime / this.audioBuffer.duration * this.canvas.width;
-		} else {
-			this.startCursorPosition = 0;
+		this.startCursorPosition = this.computeCursorOffset(this.startRefTime);
+	}
+
+	// Internal Markers //
+
+	private updateMarkers() {
+		for (let marker of this.markers) {
+			marker.offset = this.computeCursorOffset(marker.start);
+			marker.width = this.computeCursorOffset(marker.end) - marker.offset;
+		}
+	}
+
+	private isMarkerHover(marker: InternalWaveformMarker) {
+		return this.startRefTime >= marker.start && this.startRefTime <= marker.end;
+	}
+
+	private updateMarkerHover() {
+		for (let marker of this.markers) {
+			marker.hover = this.isMarkerHover(marker);
 		}
 	}
 
@@ -412,6 +439,8 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		}
 	}
 
+	// Time
+
 	async setTime(duration: number) {
 		const wasPlaying = (this.refTime != null && this.refRealTime != null);
 		await this.stop();
@@ -420,8 +449,9 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		if (wasPlaying) {
 			await this.play();
 		}
-
 	}
+
+	// Start time
 
 	setStartTime(time: number) {
 
@@ -433,6 +463,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 
 		this.startRefTime = time;
 		this.updateStartCursor();
+		this.updateMarkerHover();
 
 	}
 
@@ -444,4 +475,40 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		this.setStartTime(this.startRefTime + delta);
 	}
 
+	// Markers
+
+	addMarker(start: number, end: number) {
+		const startOffset = this.computeCursorOffset(start);
+		const marker: InternalWaveformMarker = {
+			start: start,
+			end: end,
+			offset: this.computeCursorOffset(start),
+			width: this.computeCursorOffset(end) - startOffset,
+			hover: false
+		};
+		marker.hover = this.isMarkerHover(marker);
+		this.markers.push(marker);
+	}
+
+	addMarkerAtStartTime(duration: number) {
+		this.addMarker(this.startRefTime, this.startRefTime + duration);
+	}
+
+	getSelectedMarkers(): WaveformMarker[] {
+		return this.markers.filter(marker => marker.hover);
+	}
+
+}
+
+
+export interface WaveformMarker {
+	start: number,
+	end: number,
+}
+
+
+interface InternalWaveformMarker extends WaveformMarker {
+	offset: number,
+	width: number,
+	hover: boolean
 }

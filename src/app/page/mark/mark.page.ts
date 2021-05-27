@@ -51,4 +51,8 @@ export class MarkPage implements OnInit {
 		}
 	}
 
+	addMarker() {
+		this.waveformEditorRef.addMarkerAtStartTime(1);
+	}
+
 }
