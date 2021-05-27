@@ -14,7 +14,7 @@ export class MarkPage implements OnInit {
 
 	@ViewChild("waveform")
 	private waveformEditorRef: WaveformEditorComponent;
-	private taskHandle: number | null = null;
+	private task = new ProgressiveTask();
 
 	public record: Record;
 
@@ -28,31 +28,70 @@ export class MarkPage implements OnInit {
 		this.record = await this.recordService.getRecord(recordDirName);
 	}
 
+	private static getTaskDurationFactor(duration: number): number {
+		return Math.min(0.25, duration / 30);
+	}
+
 	backwardStart() {
-		this.actionStop();
-		this.waveformEditorRef.moveStartTime(-0.1);
-		this.taskHandle = window.setInterval(() => {
-			this.waveformEditorRef.moveStartTime(-0.1);
+		this.waveformEditorRef.moveStartTime(-0.01);
+		this.task.start(dur => {
+			this.waveformEditorRef.moveStartTime(-MarkPage.getTaskDurationFactor(dur));
 		}, 50);
 	}
 
 	forwardStart() {
-		this.actionStop();
-		this.waveformEditorRef.moveStartTime(0.1);
-		this.taskHandle = window.setInterval(() => {
-			this.waveformEditorRef.moveStartTime(0.1);
+		this.waveformEditorRef.moveStartTime(0.01);
+		this.task.start(dur => {
+			this.waveformEditorRef.moveStartTime(MarkPage.getTaskDurationFactor(dur));
 		}, 50);
 	}
 
 	actionStop() {
-		if (this.taskHandle != null) {
-			window.clearInterval(this.taskHandle);
-			this.taskHandle = null;
-		}
+		this.task.stop();
 	}
 
 	addMarker() {
 		this.waveformEditorRef.addMarkerAtStartTime(1);
+	}
+
+	removeMarker() {
+		this.waveformEditorRef.removeSelectedMarkers();
+	}
+
+	backwardMarker() {
+		this.task.start(dur => {
+			this.waveformEditorRef.moveSelectedMarkers(-MarkPage.getTaskDurationFactor(dur));
+		}, 50);
+	}
+
+	forwardMarker() {
+		this.task.start(dur => {
+			this.waveformEditorRef.moveSelectedMarkers(MarkPage.getTaskDurationFactor(dur));
+		}, 50);
+	}
+
+}
+
+
+class ProgressiveTask {
+
+	private taskHandle: number | null = null;
+	private taskStart: number | null = null;
+
+	start(handler: (dur: number) => void, interval: number) {
+		this.stop();
+		this.taskStart = Date.now();
+		this.taskHandle = window.setInterval(() => {
+			handler((Date.now() - this.taskStart) / 1000);
+		}, interval);
+	}
+
+	stop() {
+		if (this.taskHandle != null) {
+			window.clearInterval(this.taskHandle);
+			this.taskHandle = null;
+			this.taskStart = null;
+		}
 	}
 
 }

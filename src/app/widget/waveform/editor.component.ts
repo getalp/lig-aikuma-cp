@@ -317,7 +317,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 	}
 
 	private isMarkerHover(marker: InternalWaveformMarker) {
-		return this.startRefTime >= marker.start && this.startRefTime <= marker.end;
+		return this.startRefTime >= marker.start && this.startRefTime < marker.end;
 	}
 
 	private updateMarkerHover() {
@@ -477,7 +477,24 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 
 	// Markers
 
-	addMarker(start: number, end: number) {
+	addMarker(start: number, end: number, autoShrink: boolean = true): boolean {
+
+		if (autoShrink) {
+			for (let marker of this.markers) {
+				if (start >= marker.start && start <= marker.end) {
+					return false;
+				} else if (end > marker.start && start < marker.end) {
+					end = marker.start;
+				}
+			}
+		} else {
+			for (let marker of this.markers) {
+				if (start < marker.end && end > marker.start) {
+					return false;
+				}
+			}
+		}
+
 		const startOffset = this.computeCursorOffset(start);
 		const marker: InternalWaveformMarker = {
 			start: start,
@@ -486,8 +503,12 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 			width: this.computeCursorOffset(end) - startOffset,
 			hover: false
 		};
+
 		marker.hover = this.isMarkerHover(marker);
 		this.markers.push(marker);
+
+		return true;
+
 	}
 
 	addMarkerAtStartTime(duration: number) {
@@ -496,6 +517,21 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 
 	getSelectedMarkers(): WaveformMarker[] {
 		return this.markers.filter(marker => marker.hover);
+	}
+
+	removeSelectedMarkers() {
+		this.markers = this.markers.filter(marker => !marker.hover);
+	}
+
+	moveSelectedMarkers(delta: number) {
+		for (let marker of this.markers) {
+			if (marker.hover) {
+				marker.start += delta
+				marker.end += delta;
+			}
+		}
+		this.updateMarkers();
+		this.moveStartTime(delta);
 	}
 
 }
