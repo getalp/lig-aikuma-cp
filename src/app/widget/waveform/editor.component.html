@@ -8,7 +8,10 @@
 		 *ngFor="let marker of markers"
 		 [class.hover]="marker.hover"
 		 [style.left.px]="marker.offset"
-		 [style.width.px]="marker.width"></div>
+		 [style.width.px]="marker.width"
+		 (touchstart)="markerTouchStart(marker, $event)"
+		 (touchmove)="markerTouchMove(marker, $event)"
+		 (touchend)="markerTouchEnd(marker, $event)"></div>
 
 	<div class="waveform-editor-cursor live"
 		 *ngIf="isPlaying()"

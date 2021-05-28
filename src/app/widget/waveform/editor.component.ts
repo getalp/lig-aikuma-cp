@@ -1,6 +1,7 @@
 import {Component, Input, ElementRef, OnInit, OnDestroy, AfterViewInit, ViewChild} from "@angular/core";
 
 import {Filesystem} from "@capacitor/filesystem";
+import {Haptics} from "@capacitor/haptics";
 
 import {ResizeSensor} from "css-element-queries";
 import WaveformData from "waveform-data";
@@ -15,7 +16,7 @@ import {base64ToBuffer} from "../../utils";
 export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit {
 
 	private static readonly MIN_ZOOM = 1;
-	private static readonly MAX_ZOOM = 10;
+	private static readonly MAX_ZOOM = 6;
 
 	@ViewChild("container")
 	private containerRef: ElementRef;
@@ -47,10 +48,12 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 
 	// Markers
 	public markers: InternalWaveformMarker[] = [];
+	private markerMoveHandle: number | null = null;
 
 	// Last data
 	private lastUri: string;
 	private lastTouchDist: number = 0;
+	private lastTouchScreenX: number | null = null;
 
 	// Sizes and zoom
 	private canvasZoom: number = 1;
@@ -110,6 +113,8 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		return this.touchHorizontalDistance(e.touches[0], e.touches[1]);
 	}
 
+	// Canvas Touch //
+
 	canvasTouchStart(e: TouchEvent) {
 		if (e.touches.length === 2) {
 			this.lastTouchDist = WaveformEditorComponent.touchEventHorizontalDistance(e);
@@ -118,19 +123,72 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 
 	canvasTouchMove(e: TouchEvent) {
 		if (e.touches.length === 2) {
+
 			const dist = WaveformEditorComponent.touchEventHorizontalDistance(e);
-			const ratio = dist / this.lastTouchDist;
+			const ratio = (this.lastTouchDist <= 0 || dist < 0) ? 1 : (dist / this.lastTouchDist);
 			this.lastTouchDist = dist;
 			this.canvasZoom *= ratio;
+
 			if (this.canvasZoom < WaveformEditorComponent.MIN_ZOOM) {
 				this.canvasZoom = WaveformEditorComponent.MIN_ZOOM;
 			} else if (this.canvasZoom > WaveformEditorComponent.MAX_ZOOM) {
 				this.canvasZoom = WaveformEditorComponent.MAX_ZOOM;
 			}
+
 			this.updateCanvasSize();
 			this.draw();
+
 		}
 	}
+
+	// Marker Touch //
+
+	markerTouchStart(marker: InternalWaveformMarker, e: TouchEvent) {
+		this.stopMarkerTouchTimeout();
+		this.markerMoveHandle = window.setTimeout(() => {
+			Haptics.vibrate().then();
+			this.markerMoveHandle = null;
+			this.lastTouchScreenX = null;
+			marker.hover = true;
+		}, 500);
+	}
+
+	markerTouchMove(marker: InternalWaveformMarker, e: TouchEvent) {
+		this.stopMarkerTouchTimeout();
+		if (marker.hover && this.audioBuffer != null) {
+
+			const screenX = e.touches[0].screenX;
+
+			if (this.lastTouchScreenX != null) {
+				const delta = screenX - this.lastTouchScreenX;
+				const deltaTime = delta / this.canvas.width * this.audioBuffer.duration;
+				marker.start += deltaTime;
+				marker.end += deltaTime;
+				this.updateMarkers();
+			}
+
+			this.lastTouchScreenX = screenX;
+
+			e.preventDefault();
+			e.stopPropagation();
+
+		}
+	}
+
+	markerTouchEnd(marker: InternalWaveformMarker, e: TouchEvent) {
+		this.stopMarkerTouchTimeout();
+		marker.hover = false;
+		console.log("marker touch up: " + marker.start);
+	}
+
+	private stopMarkerTouchTimeout() {
+		if (this.markerMoveHandle != null) {
+			window.clearInterval(this.markerMoveHandle);
+			this.markerMoveHandle = null;
+		}
+	}
+
+	// Draw //
 
 	private ensureWaveformData(): Promise<WaveformData> {
 
@@ -143,13 +201,6 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 			audio_context: this.audioCtx,
 			array_buffer: this.audioArray
 		};
-
-		/*if (this.audioBuffer != null) {
-		  config.audio_buffer = this.audioBuffer;
-		} else {
-		  config.audio_context = this.audioCtx;
-		  config.array_buffer = this.audioArray;
-		}*/
 
 		return new Promise((resolve, reject) => {
 			WaveformData.createFromAudio(config, (error, waveformData, audioBuffer) => {
@@ -244,6 +295,8 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 
 	}
 
+	// Zoom and Size //
+
 	private onResized({width, height}: { width: number; height: number }) {
 		this.parentWidth = width;
 		this.parentHeight = height;
@@ -254,13 +307,38 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 	}
 
 	private updateCanvasSize() {
+
+		const containerElement = this.containerRef.nativeElement as HTMLElement;
+		const oldCenter = (containerElement.scrollLeft + (this.parentWidth / 2)) / this.canvas.width;
+
 		// Je n'ai pas réussit à utiliser les propriété directement dans le template, le rafraichissement était bugué.
 		this.canvas.width = Math.floor(this.parentWidth * this.canvasZoom);
 		this.canvas.height = this.parentHeight;
+
+		// On met à jour le scroll pour que le zoom se fasse par rapport au centre de l'écran.
+		containerElement.scrollLeft = (oldCenter * this.canvas.width) - (this.parentWidth / 2);
+
 		this.updateCursor();
 		this.updateStartCursor();
 		this.updateMarkers();
+
 	}
+
+	private ensureScrollTo(position: number) {
+
+		const containerElement = this.containerRef.nativeElement as HTMLElement;
+		const scrollStart = containerElement.scrollLeft;
+		const scrollEnd = scrollStart + this.parentWidth;
+
+		if (position < scrollStart) {
+			containerElement.scrollLeft = position - this.parentWidth + 30;
+		} else if (position > scrollEnd) {
+			containerElement.scrollLeft = position - 30;
+		}
+
+	}
+
+	// Common for public API //
 
 	private stopAudioBufferSource(): Promise<void> {
 		this.audioBufferSource.disconnect();
@@ -285,7 +363,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 
 	private scheduleUpdateCursor() {
 		this.updateCursorHandle = window.setInterval(() => {
-			this.updateCursor();
+			this.updateCursor(true);
 		}, 10);
 	}
 
@@ -294,17 +372,26 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		this.updateCursorHandle = null;
 	}
 
-	private updateCursor() {
+	private updateCursor(ensureScroll: boolean = false) {
+
 		if (this.refTime != null && this.audioBuffer != null) {
 			const realTime = this.refTime + (this.refRealTime == null ? 0 : (this.audioCtx.currentTime - this.refRealTime));
 			this.cursorPosition = this.computeCursorOffset(realTime);
 		} else {
 			this.cursorPosition = 0;
 		}
+
+		if (ensureScroll) {
+			this.ensureScrollTo(this.cursorPosition);
+		}
+
 	}
 
-	private updateStartCursor() {
+	private updateStartCursor(ensureScroll: boolean = false) {
 		this.startCursorPosition = this.computeCursorOffset(this.startRefTime);
+		if (ensureScroll) {
+			this.ensureScrollTo(this.startCursorPosition);
+		}
 	}
 
 	// Internal Markers //
@@ -321,9 +408,9 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 	}
 
 	private updateMarkerHover() {
-		for (let marker of this.markers) {
+		/*for (let marker of this.markers) { TODO
 			marker.hover = this.isMarkerHover(marker);
-		}
+		}*/
 	}
 
 	// Public API //
@@ -430,10 +517,10 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 			this.refTime = null;
 			this.refRealTime = null;
 			if (wasPaused) {
-				this.updateCursor();
+				this.updateCursor(true);
 			} else {
 				this.stopUpdateCursor();
-				this.updateCursor();
+				this.updateCursor(true);
 				await this.stopAudioBufferSource();
 			}
 		}
@@ -462,7 +549,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		}
 
 		this.startRefTime = time;
-		this.updateStartCursor();
+		this.updateStartCursor(!this.isPlaying());
 		this.updateMarkerHover();
 
 	}
@@ -504,7 +591,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 			hover: false
 		};
 
-		marker.hover = this.isMarkerHover(marker);
+		// marker.hover = this.isMarkerHover(marker); TODO
 		this.markers.push(marker);
 
 		return true;
