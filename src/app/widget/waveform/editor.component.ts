@@ -144,17 +144,17 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 	// Marker Touch //
 
 	markerTouchStart(marker: InternalWaveformMarker, e: TouchEvent) {
-		this.stopMarkerTouchTimeout();
+		/*this.stopMarkerTouchTimeout();
 		this.markerMoveHandle = window.setTimeout(() => {
 			Haptics.vibrate().then();
 			this.markerMoveHandle = null;
 			this.lastTouchScreenX = null;
 			marker.hover = true;
-		}, 500);
+		}, 500);*/
 	}
 
 	markerTouchMove(marker: InternalWaveformMarker, e: TouchEvent) {
-		this.stopMarkerTouchTimeout();
+		/*this.stopMarkerTouchTimeout();
 		if (marker.hover && this.audioBuffer != null) {
 
 			const screenX = e.touches[0].screenX;
@@ -172,21 +172,21 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 			e.preventDefault();
 			e.stopPropagation();
 
-		}
+		}*/
 	}
 
 	markerTouchEnd(marker: InternalWaveformMarker, e: TouchEvent) {
-		this.stopMarkerTouchTimeout();
+		/*this.stopMarkerTouchTimeout();
 		marker.hover = false;
-		console.log("marker touch up: " + marker.start);
+		console.log("marker touch up: " + marker.start);*/
 	}
 
-	private stopMarkerTouchTimeout() {
+	/*private stopMarkerTouchTimeout() {
 		if (this.markerMoveHandle != null) {
 			window.clearInterval(this.markerMoveHandle);
 			this.markerMoveHandle = null;
 		}
-	}
+	}*/
 
 	// Draw //
 
