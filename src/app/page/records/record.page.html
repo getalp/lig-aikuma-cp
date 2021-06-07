@@ -14,7 +14,8 @@
 	<app-waveform-editor [uri]="record.getAacUri()"
 						 [style.margin]="'20px 0 0 0'"
 						 [style.height.px]="80"
-						 [style.width]="'100%'"></app-waveform-editor>
+						 [style.width]="'100%'"
+						 [timeLabels]="true"></app-waveform-editor>
 
 	<ion-list *ngIf="record.type == RecordType.Raw">
 		<ion-list-header>

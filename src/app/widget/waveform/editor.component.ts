@@ -26,6 +26,8 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 	private canvas: HTMLCanvasElement;
 	private ctx: CanvasRenderingContext2D;
 	private resizeSensor: ResizeSensor;
+	private showTimeTicks: boolean = false;
+	private showTimeLabels: boolean = false;
 
 	// Audio data
 	private audioCtx: AudioContext;
@@ -80,14 +82,30 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		this.canvas = this.canvasRef.nativeElement;
 		this.ctx = this.canvas.getContext("2d");
 		this.resizeSensor = new ResizeSensor(this.element.nativeElement, size => this.onResized(size));
-		if (this.audioArray != null) {
-			this.draw();
-		}
+		this.drawIfPossible();
 	}
 
 	@Input()
 	set uri(uri: string) {
 		this.load(uri).then();
+	}
+
+	@Input()
+	set timeTicks(enabled: boolean) {
+		this.showTimeTicks = enabled;
+		this.drawIfPossible();
+	}
+
+	@Input()
+	set timeLabels(enabled: boolean) {
+		this.showTimeLabels = enabled;
+		this.drawIfPossible();
+	}
+
+	private drawIfPossible() {
+		if (this.audioCtx != null && this.audioArray != null) {
+			this.draw();
+		}
 	}
 
 	private draw() {
@@ -301,28 +319,37 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 
 		ctx.clearRect(0, topHeight - 1, can.width, 1);
 
-		const optimalTimeInterval = this.audioBuffer.duration / this.canvasZoom / 10;
-		const realTimeInterval =
-			(optimalTimeInterval < 1) ? 1 :
-			(optimalTimeInterval < 2) ? 2 :
-			(optimalTimeInterval < 5) ? 5 :
-			(optimalTimeInterval < 10) ? 10 :
-			(optimalTimeInterval < 30) ? 30 :
-			(optimalTimeInterval < 60) ? 60 :
-			Math.ceil(optimalTimeInterval);
+		if (this.showTimeTicks || this.showTimeLabels) {
 
-		const pixelsPerSecond = can.width / this.audioBuffer.duration;
+			const optimalTimeInterval = this.audioBuffer.duration / this.canvasZoom / 10;
+			const realTimeInterval =
+				(optimalTimeInterval < 1) ? 1 :
+				(optimalTimeInterval < 2) ? 2 :
+				(optimalTimeInterval < 5) ? 5 :
+				(optimalTimeInterval < 10) ? 10 :
+				(optimalTimeInterval < 30) ? 30 :
+				(optimalTimeInterval < 60) ? 60 :
+				Math.ceil(optimalTimeInterval);
 
-		ctx.strokeStyle = "#999";
-		ctx.textAlign = "center";
-		ctx.font = "11px Arial";
-		ctx.lineWidth = 1;
-		for (let time = realTimeInterval, dur = this.audioBuffer.duration; time < dur; time += realTimeInterval) {
-			const x = time * pixelsPerSecond;
-			ctx.moveTo(x, can.height);
-			ctx.lineTo(x, can.height - 10);
-			ctx.stroke();
-			ctx.fillText(time + "s", x, can.height - 15);
+			const pixelsPerSecond = can.width / this.audioBuffer.duration;
+
+			ctx.strokeStyle = "#999";
+			ctx.textAlign = "center";
+			ctx.font = "11px Arial";
+			ctx.lineWidth = 1;
+
+			for (let time = realTimeInterval, dur = this.audioBuffer.duration; time < dur; time += realTimeInterval) {
+				const x = time * pixelsPerSecond;
+				if (this.showTimeTicks) {
+					ctx.moveTo(x, can.height);
+					ctx.lineTo(x, can.height - 10);
+					ctx.stroke();
+				}
+				if (this.showTimeLabels) {
+					ctx.fillText(time + "s", x, can.height - (this.showTimeTicks ? 15 : 7));
+				}
+			}
+
 		}
 
 	}
@@ -333,9 +360,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		this.parentWidth = width;
 		this.parentHeight = height;
 		this.updateCanvasSize();
-		if (this.audioArray != null) {
-			this.draw();
-		}
+		this.drawIfPossible();
 	}
 
 	private updateCanvasSize() {
@@ -476,9 +501,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		this.audioArray = buf;
 		this.waveformData = null; // Reset the waveform data to force computation.
 		this.audioBuffer = null;
-		if (this.audioCtx != null) {
-			this.draw();
-		}
+		this.drawIfPossible();
 	}
 
 	isLoaded(): boolean {
