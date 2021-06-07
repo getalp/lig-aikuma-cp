@@ -29,7 +29,7 @@ export class MarkPage implements OnInit {
 	}
 
 	private static getTaskDurationFactor(duration: number): number {
-		return Math.min(0.25, duration / 30);
+		return Math.log(1 + duration / 20) * 5;
 	}
 
 	backwardStart() {
@@ -55,7 +55,7 @@ export class MarkPage implements OnInit {
 	}
 
 	removeMarker() {
-		this.waveformEditorRef.removeSelectedMarkers();
+		// this.waveformEditorRef.removeSelectedMarkers();
 	}
 
 	backwardMarker() {

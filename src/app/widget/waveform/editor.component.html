@@ -5,13 +5,11 @@
 			(touchmove)="canvasTouchMove($event)"></canvas>
 
 	<div class="waveform-editor-cursor marker"
-		 *ngFor="let marker of markers"
-		 [class.hover]="marker.hover"
+		 *ngFor="let marker of markers; let i = index"
+		 [class.selected]="selectedMarker === i"
 		 [style.left.px]="marker.offset"
 		 [style.width.px]="marker.width"
-		 (touchstart)="markerTouchStart(marker, $event)"
-		 (touchmove)="markerTouchMove(marker, $event)"
-		 (touchend)="markerTouchEnd(marker, $event)"></div>
+		 (click)="markerClicked(i)"></div>
 
 	<div class="waveform-editor-cursor live"
 		 *ngIf="isPlaying()"

@@ -1,11 +1,11 @@
 import {Component, Input, ElementRef, OnInit, OnDestroy, AfterViewInit, ViewChild} from "@angular/core";
 
 import {Filesystem} from "@capacitor/filesystem";
-import {Haptics} from "@capacitor/haptics";
 
 import {ResizeSensor} from "css-element-queries";
 import WaveformData from "waveform-data";
 import {base64ToBuffer} from "../../utils";
+import {Toast} from "@capacitor/toast";
 
 
 @Component({
@@ -48,12 +48,12 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 
 	// Markers
 	public markers: InternalWaveformMarker[] = [];
+	public selectedMarker: number | null = null;
 	private markerMoveHandle: number | null = null;
 
 	// Last data
 	private lastUri: string;
 	private lastTouchDist: number = 0;
-	private lastTouchScreenX: number | null = null;
 
 	// Sizes and zoom
 	private canvasZoom: number = 1;
@@ -142,6 +142,14 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 	}
 
 	// Marker Touch //
+
+	markerClicked(markerIndex: number) {
+		if (this.selectedMarker === markerIndex) {
+			this.selectedMarker = null;
+		} else {
+			this.selectedMarker = markerIndex;
+		}
+	}
 
 	markerTouchStart(marker: InternalWaveformMarker, e: TouchEvent) {
 		/*this.stopMarkerTouchTimeout();
@@ -292,6 +300,30 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		}
 
 		ctx.clearRect(0, topHeight - 1, can.width, 1);
+
+		const optimalTimeInterval = this.audioBuffer.duration / this.canvasZoom / 10;
+		const realTimeInterval =
+			(optimalTimeInterval < 1) ? 1 :
+			(optimalTimeInterval < 2) ? 2 :
+			(optimalTimeInterval < 5) ? 5 :
+			(optimalTimeInterval < 10) ? 10 :
+			(optimalTimeInterval < 30) ? 30 :
+			(optimalTimeInterval < 60) ? 60 :
+			Math.ceil(optimalTimeInterval);
+
+		const pixelsPerSecond = can.width / this.audioBuffer.duration;
+
+		ctx.strokeStyle = "#999";
+		ctx.textAlign = "center";
+		ctx.font = "11px Arial";
+		ctx.lineWidth = 1;
+		for (let time = realTimeInterval, dur = this.audioBuffer.duration; time < dur; time += realTimeInterval) {
+			const x = time * pixelsPerSecond;
+			ctx.moveTo(x, can.height);
+			ctx.lineTo(x, can.height - 10);
+			ctx.stroke();
+			ctx.fillText(time + "s", x, can.height - 15);
+		}
 
 	}
 
@@ -583,16 +615,15 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		}
 
 		const startOffset = this.computeCursorOffset(start);
-		const marker: InternalWaveformMarker = {
+
+		// marker.hover = this.isMarkerHover(marker); TODO
+		this.selectedMarker = this.markers.length;
+		this.markers.push({
 			start: start,
 			end: end,
 			offset: this.computeCursorOffset(start),
-			width: this.computeCursorOffset(end) - startOffset,
-			hover: false
-		};
-
-		// marker.hover = this.isMarkerHover(marker); TODO
-		this.markers.push(marker);
+			width: this.computeCursorOffset(end) - startOffset
+		});
 
 		return true;
 
@@ -602,23 +633,27 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		this.addMarker(this.startRefTime, this.startRefTime + duration);
 	}
 
-	getSelectedMarkers(): WaveformMarker[] {
+	getSelectedMarker(): WaveformMarker {
+		return this.markers[this.selectedMarker];
+	}
+
+	/*getSelectedMarkers(): WaveformMarker[] {
 		return this.markers.filter(marker => marker.hover);
 	}
 
 	removeSelectedMarkers() {
 		this.markers = this.markers.filter(marker => !marker.hover);
-	}
+	}*/
 
 	moveSelectedMarkers(delta: number) {
-		for (let marker of this.markers) {
+		/*for (let marker of this.markers) {
 			if (marker.hover) {
 				marker.start += delta
 				marker.end += delta;
 			}
 		}
 		this.updateMarkers();
-		this.moveStartTime(delta);
+		this.moveStartTime(delta);*/
 	}
 
 }
@@ -632,6 +667,5 @@ export interface WaveformMarker {
 
 interface InternalWaveformMarker extends WaveformMarker {
 	offset: number,
-	width: number,
-	hover: boolean
+	width: number
 }

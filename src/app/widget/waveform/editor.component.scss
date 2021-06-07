@@ -33,13 +33,13 @@
 }
 
 .waveform-editor-cursor.marker {
-	border-width: 2px;
+	border-width: 1px;
 	border-color: rgba(47, 224, 34, 0.6);
-	border-style: none dashed none dashed;
+	border-style: none solid none solid;
 	background-color: transparent;
 	transition: background-color .2s;
 }
 
-.waveform-editor-cursor.marker.hover {
+.waveform-editor-cursor.marker.selected {
 	background-color: rgba(47, 224, 34, 0.1);
 }
