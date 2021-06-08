@@ -2,7 +2,8 @@
 
 	<canvas #canvas
 			(touchstart)="canvasTouchStart($event)"
-			(touchmove)="canvasTouchMove($event)"></canvas>
+			(touchmove)="canvasTouchMove($event)"
+			(click)="canvasClick($event)"></canvas>
 
 	<div class="waveform-editor-cursor marker"
 		 *ngFor="let marker of markers; let i = index"

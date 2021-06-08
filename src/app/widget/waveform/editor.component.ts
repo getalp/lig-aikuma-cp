@@ -159,6 +159,15 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		}
 	}
 
+	canvasClick(e: MouseEvent) {
+		if (this.audioBuffer != null) {
+			const canvasRect = this.canvas.getBoundingClientRect();
+			const touchX = e.clientX - canvasRect.left;
+			const touchRatio = touchX / this.canvas.width;
+			this.setStartTime(touchRatio * this.audioBuffer.duration);
+		}
+	}
+
 	// Marker Touch //
 
 	markerClicked(markerIndex: number) {
@@ -572,10 +581,10 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 			this.refTime = null;
 			this.refRealTime = null;
 			if (wasPaused) {
-				this.updateCursor(true);
+				// this.updateCursor(true);
 			} else {
 				this.stopUpdateCursor();
-				this.updateCursor(true);
+				// this.updateCursor(true);
 				await this.stopAudioBufferSource();
 			}
 		}
