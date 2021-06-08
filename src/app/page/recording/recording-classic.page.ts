@@ -1,7 +1,6 @@
 import {PluginListenerHandle} from "@capacitor/core/types/definitions";
 import {Component, NgZone, OnDestroy, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from "@angular/router";
-import {Location} from "@angular/common";
 
 import {Toast} from "@capacitor/toast";
 
@@ -9,6 +8,7 @@ import {RawRecorder, RecordService} from "../../service/record.service";
 import {Iso639Service} from "../../service/iso-639.service";
 import {AikumaNative} from "../../native";
 import {Record} from "../../record";
+import {formatDuration} from "../../utils";
 
 
 @Component({
@@ -17,6 +17,8 @@ import {Record} from "../../record";
 	styleUrls: ['./recording-classic.page.scss'],
 })
 export class RecordingClassicPage implements OnInit, OnDestroy {
+
+	public formatDuration = formatDuration;
 
 	private rawRecorder: RawRecorder = null;
 	private timeHandle: Promise<PluginListenerHandle>;

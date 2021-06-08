@@ -18,7 +18,7 @@
 			<ion-icon *ngIf="!paused" name="pause"></ion-icon>
 		</ion-button>
 
-		<h5 *ngIf="started" style="text-align: center;">{{ duration.toFixed(1) }}s</h5>
+		<h5 *ngIf="started" style="text-align: center;">{{ formatDuration(duration, 1) }}</h5>
 
 		<ion-button expand="block" (click)="onSaveClick()" [disabled]="!this.started || !this.paused" style="margin-top: 25px;">Save</ion-button>
 

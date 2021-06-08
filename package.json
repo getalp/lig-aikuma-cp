@@ -29,6 +29,7 @@
     "@capacitor/filesystem": "^1.0.0",
     "@capacitor/haptics": "^1.0.0",
     "@capacitor/keyboard": "^1.0.0",
+    "@capacitor/local-notifications": "^1.0.0",
     "@capacitor/toast": "^1.0.0",
     "@ionic/angular": "^5.5.2",
     "@ionic/pwa-elements": "^3.0.2",

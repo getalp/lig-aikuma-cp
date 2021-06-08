@@ -1,6 +1,7 @@
 import {Injectable} from '@angular/core';
 
 import {Filesystem, ReaddirResult, StatResult, Encoding} from '@capacitor/filesystem'
+import {LocalNotifications} from "@capacitor/local-notifications";
 import {AikumaNative} from "../native";
 
 import {computePath, getCommonOptions} from "../files";
@@ -16,8 +17,25 @@ export class RecordService {
 	private static readonly RECORDS_DIR = "records";
 
 	private records: { [key: string]: Record } = null;
+	private recorder: BaseRecorder | null = null;
 
-	constructor() { }
+	constructor() {
+
+		LocalNotifications.registerActionTypes({
+			types: [
+				{
+					id: "audio_record",
+					actions: [
+						{
+							id: "pause",
+							title: "Pause"
+						}
+					]
+				}
+			]
+		}).then();
+
+	}
 
 	async load() {
 
@@ -172,13 +190,32 @@ export class RecordService {
 		}
 	}
 
+	/*private beginRecord<T extends BaseRecorder>(factory: () => T): T {
+		if (this.recorder != null) {
+			throw "Another record is already started, no recorder can be built.";
+		}
+		this.recorder = factory();
+		return <T>this.recorder;
+	}
+
+	private clearRecord() {
+		this.recorder = null;
+	}*/
+
 	async beginRawRecord(record: Record): Promise<RawRecorder> {
 		if (record.baseUri == null) {
 			throw "The record must be linked and initialized by the RecordService before beginning record.";
 		} else {
+			// return this.beginRecord(() => new RawRecorder(this, record));
 			return new RawRecorder(this, record);
 		}
 	}
+
+	/*async stopCurrentRecord() {
+		if (this.recorder != null) {
+			await this.recorder.stop();
+		}
+	}*/
 
 	static getRecordDirName(record: Record): string {
 		const date = record.date;
@@ -196,10 +233,16 @@ export class RecordService {
 }
 
 
-export class RawRecorder {
+interface BaseRecorder {
+	stop(): Promise<void>;
+}
+
+
+export class RawRecorder implements BaseRecorder {
 
 	private currentPath: string = null;
 	private paused: boolean = true;
+	//private notificationId: number | null = null;
 
 	constructor(
 		private service: RecordService,
@@ -226,6 +269,20 @@ export class RawRecorder {
 			}).then(() => {
 				this.currentPath = path;
 				this.paused = false;
+				/*return LocalNotifications.schedule({
+					notifications: [
+						{
+							title: "LIG Aikuma is recording",
+							body: "Recording LIG Aikuma",
+							id: Math.floor(Math.random() * 100000),
+							actionTypeId: "audio_record",
+							ongoing: true,
+							autoCancel: false
+						}
+					]
+				}).then(res => {
+					this.notificationId = res.notifications[0].id;
+				});*/
 			}).catch(err => {
 				console.warn("Failed to start recording: " + err);
 				this.currentPath = null;
@@ -261,6 +318,15 @@ export class RawRecorder {
 				this.paused = true;
 				this.record.hasAudio = true;
 				this.record.duration = res.duration;
+				/*if (this.notificationId != null) {
+					LocalNotifications.cancel({
+						notifications: [
+							{
+								id: this.notificationId
+							}
+						]
+					}).then();
+				}*/
 				return this.service.saveRecord(this.record).then(() => {
 					console.log("Successfully saved record to: " + res.path + " (" + res.duration + "s)");
 				});
