@@ -4,8 +4,7 @@ import {Filesystem} from "@capacitor/filesystem";
 
 import {ResizeSensor} from "css-element-queries";
 import WaveformData from "waveform-data";
-import {base64ToBuffer} from "../../utils";
-import {Toast} from "@capacitor/toast";
+import {base64ToBuffer, formatDuration} from "../../utils";
 
 
 @Component({
@@ -232,7 +231,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		}
 
 		const config: any = {
-			scale: 256,
+			scale: 512,
 			audio_context: this.audioCtx,
 			array_buffer: this.audioArray
 		};
@@ -270,11 +269,14 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 
 	private internalDraw(data: WaveformData) {
 
+		// Drawing constants
+		const barWidth = 2;
+		const barSpace = 2;
+		const middlePos = 0.66;
+		const maxTimeTicksCount = 8;
+
 		const can = this.canvas;
 		const ctx = this.ctx;
-
-		const barWidth = 3;
-		const barSpace = 2;
 
 		ctx.clearRect(0, 0, can.width, can.height);
 
@@ -284,7 +286,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		const barSamples = data.length / barCount;
 		const barSamplesFloor = Math.floor(barSamples);
 
-		const topHeight = Math.floor(can.height * 0.66);
+		const topHeight = Math.floor(can.height * middlePos);
 		const bottomHeight = can.height - topHeight;
 
 		let overallMaxSample = 0;
@@ -330,12 +332,13 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 
 		if (this.showTimeTicks || this.showTimeLabels) {
 
-			const optimalTimeInterval = this.audioBuffer.duration / this.canvasZoom / 10;
+			const optimalTimeInterval = this.audioBuffer.duration / this.canvasZoom / maxTimeTicksCount;
 			const realTimeInterval =
 				(optimalTimeInterval < 1) ? 1 :
 				(optimalTimeInterval < 2) ? 2 :
 				(optimalTimeInterval < 5) ? 5 :
 				(optimalTimeInterval < 10) ? 10 :
+				(optimalTimeInterval < 15) ? 15 :
 				(optimalTimeInterval < 30) ? 30 :
 				(optimalTimeInterval < 60) ? 60 :
 				Math.ceil(optimalTimeInterval);
@@ -355,7 +358,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 					ctx.stroke();
 				}
 				if (this.showTimeLabels) {
-					ctx.fillText(time + "s", x, can.height - (this.showTimeTicks ? 15 : 7));
+					ctx.fillText(formatDuration(time), x, can.height - (this.showTimeTicks ? 15 : 7));
 				}
 			}
 
