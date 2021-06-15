@@ -55,9 +55,11 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 	// Last data
 	private lastUri: string;
 	private lastTouchDist: number = 0;
+	private lastTouchMiddle: number = 0;
 
 	// Sizes and zoom
-	private canvasZoom: number = 1;
+	private canvasZoom: number = 2;
+	private canvasOffset: number = 0;
 	private parentWidth: number = 0;
 	private parentHeight: number = 0;
 
@@ -107,6 +109,110 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		}
 	}
 
+	private static touchHorizontalDistance(t0: Touch, t1: Touch): number {
+		return Math.abs(t0.screenX - t1.screenX);
+	}
+
+	private static touchHorizontalMiddle(t0: Touch, t1: Touch): number {
+		return (t0.screenX + t1.screenX) / 2;
+	}
+
+	private static touchEventHorizontalDistance(e: TouchEvent): number {
+		return this.touchHorizontalDistance(e.touches[0], e.touches[1]);
+	}
+
+	private static touchEventHorizontalMiddle(e: TouchEvent): number {
+		return this.touchHorizontalMiddle(e.touches[0], e.touches[1]);
+	}
+
+	// Canvas Touch //
+
+	canvasTouchStart(e: TouchEvent) {
+		if (e.touches.length === 1) {
+			this.lastTouchDist = 0;
+			this.lastTouchMiddle = e.touches[0].clientX;
+		} else if (e.touches.length === 2) {
+			this.lastTouchDist = WaveformEditorComponent.touchEventHorizontalDistance(e);
+			this.lastTouchMiddle = WaveformEditorComponent.touchEventHorizontalMiddle(e);
+		}
+	}
+
+	canvasTouchMove(e: TouchEvent) {
+
+		let dist = 0, middle = null;
+
+		if (e.touches.length === 1) {
+			middle = e.touches[0].clientX;
+		} else if (e.touches.length === 2) {
+			dist = WaveformEditorComponent.touchEventHorizontalDistance(e);
+			middle = WaveformEditorComponent.touchEventHorizontalMiddle(e);
+		}
+
+		if (middle != null) {
+
+			if (this.lastTouchDist > 0 && dist > 0) {
+
+				const distRatio = dist / this.lastTouchDist;
+				this.lastTouchDist = dist;
+				this.canvasZoom *= distRatio;
+
+				const lastMiddleRatio = 1 - (this.getCanvasX(this.lastTouchMiddle) / this.canvas.width);
+				const canvasSizeDiff = this.canvas.width * (distRatio - 1);
+				this.canvasOffset += canvasSizeDiff * lastMiddleRatio;
+
+				console.log(
+					"distRatio: " + distRatio.toFixed(4) +
+					", lastMiddleRatio: " + lastMiddleRatio.toFixed(2) +
+					", canvasSizeDiff: " + canvasSizeDiff.toFixed(2) +
+					", addToOffset: " + (canvasSizeDiff * lastMiddleRatio).toFixed(3));
+
+				if (this.canvasZoom < WaveformEditorComponent.MIN_ZOOM) {
+					this.canvasZoom = WaveformEditorComponent.MIN_ZOOM;
+				} else if (this.canvasZoom > WaveformEditorComponent.MAX_ZOOM) {
+					this.canvasZoom = WaveformEditorComponent.MAX_ZOOM;
+				}
+
+			}
+
+			const middleDiff = this.lastTouchMiddle - middle;
+			this.canvasOffset += middleDiff;
+			this.lastTouchMiddle = middle;
+
+			this.fixCanvasOffset();
+			this.drawIfPossible();
+
+			/*if (distRatio != null) {
+				this.canvasOffset *= distRatio;
+			}*/
+
+		}
+
+	}
+
+	canvasClick(e: MouseEvent) {
+		if (this.audioBuffer != null) {
+			const touchRatio = this.getCanvasX(e.clientX) / this.canvas.width;
+			this.setStartTime(touchRatio * this.audioBuffer.duration);
+		}
+	}
+
+	private getCanvasX(clientX: number): number {
+		const canvasRect = this.canvas.getBoundingClientRect();
+		return clientX - canvasRect.left;
+	}
+
+	// Marker Touch //
+
+	markerClicked(markerIndex: number) {
+		if (this.selectedMarker === markerIndex) {
+			this.selectedMarker = null;
+		} else {
+			this.selectedMarker = markerIndex;
+		}
+	}
+
+	// Draw //
+
 	private draw() {
 
 		if (this.audioCtx == null) {
@@ -121,108 +227,6 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 			});
 
 	}
-
-	private static touchHorizontalDistance(t0: Touch, t1: Touch): number {
-		return Math.abs(t0.screenX - t1.screenX);
-	}
-
-	private static touchEventHorizontalDistance(e: TouchEvent): number {
-		return this.touchHorizontalDistance(e.touches[0], e.touches[1]);
-	}
-
-	// Canvas Touch //
-
-	canvasTouchStart(e: TouchEvent) {
-		if (e.touches.length === 2) {
-			this.lastTouchDist = WaveformEditorComponent.touchEventHorizontalDistance(e);
-		}
-	}
-
-	canvasTouchMove(e: TouchEvent) {
-		if (e.touches.length === 2) {
-
-			const dist = WaveformEditorComponent.touchEventHorizontalDistance(e);
-			const ratio = (this.lastTouchDist <= 0 || dist < 0) ? 1 : (dist / this.lastTouchDist);
-			this.lastTouchDist = dist;
-			this.canvasZoom *= ratio;
-
-			if (this.canvasZoom < WaveformEditorComponent.MIN_ZOOM) {
-				this.canvasZoom = WaveformEditorComponent.MIN_ZOOM;
-			} else if (this.canvasZoom > WaveformEditorComponent.MAX_ZOOM) {
-				this.canvasZoom = WaveformEditorComponent.MAX_ZOOM;
-			}
-
-			this.updateCanvasSize();
-			this.draw();
-
-		}
-	}
-
-	canvasClick(e: MouseEvent) {
-		if (this.audioBuffer != null) {
-			const canvasRect = this.canvas.getBoundingClientRect();
-			const touchX = e.clientX - canvasRect.left;
-			const touchRatio = touchX / this.canvas.width;
-			this.setStartTime(touchRatio * this.audioBuffer.duration);
-		}
-	}
-
-	// Marker Touch //
-
-	markerClicked(markerIndex: number) {
-		if (this.selectedMarker === markerIndex) {
-			this.selectedMarker = null;
-		} else {
-			this.selectedMarker = markerIndex;
-		}
-	}
-
-	markerTouchStart(marker: InternalWaveformMarker, e: TouchEvent) {
-		/*this.stopMarkerTouchTimeout();
-		this.markerMoveHandle = window.setTimeout(() => {
-			Haptics.vibrate().then();
-			this.markerMoveHandle = null;
-			this.lastTouchScreenX = null;
-			marker.hover = true;
-		}, 500);*/
-	}
-
-	markerTouchMove(marker: InternalWaveformMarker, e: TouchEvent) {
-		/*this.stopMarkerTouchTimeout();
-		if (marker.hover && this.audioBuffer != null) {
-
-			const screenX = e.touches[0].screenX;
-
-			if (this.lastTouchScreenX != null) {
-				const delta = screenX - this.lastTouchScreenX;
-				const deltaTime = delta / this.canvas.width * this.audioBuffer.duration;
-				marker.start += deltaTime;
-				marker.end += deltaTime;
-				this.updateMarkers();
-			}
-
-			this.lastTouchScreenX = screenX;
-
-			e.preventDefault();
-			e.stopPropagation();
-
-		}*/
-	}
-
-	markerTouchEnd(marker: InternalWaveformMarker, e: TouchEvent) {
-		/*this.stopMarkerTouchTimeout();
-		marker.hover = false;
-		console.log("marker touch up: " + marker.start);*/
-	}
-
-	/*private stopMarkerTouchTimeout() {
-		if (this.markerMoveHandle != null) {
-			window.clearInterval(this.markerMoveHandle);
-			this.markerMoveHandle = null;
-		}
-	}*/
-
-	// Draw //
 
 	private ensureWaveformData(): Promise<WaveformData> {
 
@@ -272,6 +276,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		// Drawing constants
 		const barWidth = 2;
 		const barSpace = 2;
+		const barTotalWidth = barWidth + barSpace;
 		const middlePos = 0.66;
 		const maxTimeTicksCount = 8;
 
@@ -282,9 +287,12 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 
 		const channel = data.channel(0);
 
-		const barCount = Math.ceil((can.width + barSpace) / (barWidth + barSpace));
+		const realWidth = this.canvasZoom * can.width;
+		const realOffset = this.canvasOffset;
+
+		const barCount = Math.ceil((realWidth + barSpace) / barTotalWidth);
 		const barSamples = data.length / barCount;
-		const barSamplesFloor = Math.floor(barSamples);
+		const barSamplesFloor = Math.ceil(barSamples);
 
 		const topHeight = Math.floor(can.height * middlePos);
 		const bottomHeight = can.height - topHeight;
@@ -321,10 +329,10 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 			const minHeight = bottomHeight * (minSample / barSamplesFloor / -this.waveformMaxSample);
 
 			ctx.fillStyle = "#333";
-			ctx.fillRect(i * (barWidth + barSpace), topHeight - maxHeight, barWidth, maxHeight);
+			ctx.fillRect(i * barTotalWidth - realOffset, topHeight - maxHeight, barWidth, maxHeight);
 
 			ctx.fillStyle = "#999";
-			ctx.fillRect(i * (barWidth + barSpace), topHeight, barWidth, minHeight);
+			ctx.fillRect(i * barTotalWidth - realOffset, topHeight, barWidth, minHeight);
 
 		}
 
@@ -334,6 +342,9 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 
 			const optimalTimeInterval = this.audioBuffer.duration / this.canvasZoom / maxTimeTicksCount;
 			const realTimeInterval =
+				(optimalTimeInterval < 0.1) ? 0.1 :
+				(optimalTimeInterval < 0.25) ? 0.25 :
+				(optimalTimeInterval < 0.5) ? 0.5 :
 				(optimalTimeInterval < 1) ? 1 :
 				(optimalTimeInterval < 2) ? 2 :
 				(optimalTimeInterval < 5) ? 5 :
@@ -343,22 +354,24 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 				(optimalTimeInterval < 60) ? 60 :
 				Math.ceil(optimalTimeInterval);
 
-			const pixelsPerSecond = can.width / this.audioBuffer.duration;
+			const pixelsPerSecond = realWidth / this.audioBuffer.duration;
 
 			ctx.strokeStyle = "#999";
 			ctx.textAlign = "center";
 			ctx.font = "11px Arial";
 			ctx.lineWidth = 1;
 
-			for (let time = realTimeInterval, dur = this.audioBuffer.duration; time < dur; time += realTimeInterval) {
-				const x = time * pixelsPerSecond;
+			const durationPrecision = (realTimeInterval < 1) ? 2 : 0;
+
+			for (let factor = 1, time, dur = this.audioBuffer.duration; (time = factor * realTimeInterval) < dur; factor++) {
+				const x = time * pixelsPerSecond - realOffset;
 				if (this.showTimeTicks) {
 					ctx.moveTo(x, can.height);
 					ctx.lineTo(x, can.height - 10);
 					ctx.stroke();
 				}
 				if (this.showTimeLabels) {
-					ctx.fillText(formatDuration(time), x, can.height - (this.showTimeTicks ? 15 : 7));
+					ctx.fillText(formatDuration(time, durationPrecision), x, can.height - (this.showTimeTicks ? 15 : 7));
 				}
 			}
 
@@ -372,25 +385,44 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		this.parentWidth = width;
 		this.parentHeight = height;
 		this.updateCanvasSize();
-		this.drawIfPossible();
 	}
 
 	private updateCanvasSize() {
 
-		const containerElement = this.containerRef.nativeElement as HTMLElement;
-		const oldCenter = (containerElement.scrollLeft + (this.parentWidth / 2)) / this.canvas.width;
+		// const containerElement = this.containerRef.nativeElement as HTMLElement;
+		// const oldCenter = (containerElement.scrollLeft + (this.parentWidth / 2)) / this.canvas.width;
 
 		// Je n'ai pas réussit à utiliser les propriété directement dans le template, le rafraichissement était bugué.
-		this.canvas.width = Math.floor(this.parentWidth * this.canvasZoom);
+		// this.canvas.width = Math.floor(this.parentWidth * this.canvasZoom);
+		this.canvas.width = this.parentWidth;
 		this.canvas.height = this.parentHeight;
 
 		// On met à jour le scroll pour que le zoom se fasse par rapport au centre de l'écran.
-		containerElement.scrollLeft = (oldCenter * this.canvas.width) - (this.parentWidth / 2);
+		// containerElement.scrollLeft = (oldCenter * this.canvas.width) - (this.parentWidth / 2);
+
+		this.fixCanvasOffset();
 
 		this.updateCursor();
 		this.updateStartCursor();
 		this.updateMarkers();
 
+		this.drawIfPossible();
+
+	}
+
+	private getMaxCanvasOffset(): number {
+		return Math.max(0, this.canvas.width * (this.canvasZoom - 1));
+	}
+
+	private fixCanvasOffset() {
+		if (this.canvasOffset < 0) {
+			this.canvasOffset = 0;
+		} else {
+			const maxOffset = this.getMaxCanvasOffset();
+			if (this.canvasOffset > maxOffset) {
+				this.canvasOffset = maxOffset;
+			}
+		}
 	}
 
 	private ensureScrollTo(position: number) {
