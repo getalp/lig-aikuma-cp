@@ -5,7 +5,13 @@
 			(touchmove)="canvasTouchMove($event)"
 			(click)="canvasClick($event)"></canvas>
 
-	<div class="waveform-editor-cursor marker"
+	<canvas #overlayCanvas
+			class="waveform-editor-overlay-canvas"
+			(touchstart)="canvasTouchStart($event)"
+			(touchmove)="canvasTouchMove($event)"
+			(click)="canvasClick($event)"></canvas>
+
+	<!--<div class="waveform-editor-cursor marker"
 		 *ngFor="let marker of markers; let i = index"
 		 [class.selected]="selectedMarker === i"
 		 [style.left.px]="marker.offset"
@@ -18,13 +24,13 @@
 
 	<div class="waveform-editor-cursor start"
 		 *ngIf="isLoaded()"
-		 [style.left.px]="startCursorPosition"></div>
+		 [style.left.px]="startCursorPosition"></div>-->
 
 </div>
 
 <div [style.position]="'absolute'"
 	 [style.left.px]="0"
-	 [style.top.px]="0">
+	 [style.top.px]="0" [style.z-index]="1">
 
 	<ion-button (click)="play()">Start</ion-button>
 	<ion-button (click)="pause()" *ngIf="isPlaying()">Pause</ion-button>

@@ -19,11 +19,16 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 
 	@ViewChild("container")
 	private containerRef: ElementRef;
-
 	@ViewChild("canvas")
 	private canvasRef: ElementRef;
+	@ViewChild("overlayCanvas")
+	private overlayCanvasRef: ElementRef;
+
 	private canvas: HTMLCanvasElement;
 	private ctx: CanvasRenderingContext2D;
+	private overlayCanvas: HTMLCanvasElement;
+	private overlayCtx: CanvasRenderingContext2D;
+
 	private resizeSensor: ResizeSensor;
 	private showTimeTicks: boolean = false;
 	private showTimeLabels: boolean = false;
@@ -44,8 +49,8 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 	private updateCursorHandle?: number;
 
 	// Exposed cursors positions;
-	public startCursorPosition: number = 0;
-	public cursorPosition: number = 0;
+	// public startCursorPosition: number = 0;
+	// public cursorPosition: number = 0;
 
 	// Markers
 	public markers: InternalWaveformMarker[] = [];
@@ -80,10 +85,15 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 	}
 
 	ngAfterViewInit(): void {
+
 		this.canvas = this.canvasRef.nativeElement;
 		this.ctx = this.canvas.getContext("2d");
+		this.overlayCanvas = this.overlayCanvasRef.nativeElement;
+		this.overlayCtx = this.overlayCanvas.getContext("2d");
+
 		this.resizeSensor = new ResizeSensor(this.element.nativeElement, size => this.onResized(size));
 		this.drawIfPossible();
+
 	}
 
 	@Input()
@@ -134,9 +144,6 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		} else if (e.touches.length === 2) {
 			this.lastTouchDist = WaveformEditorComponent.touchEventHorizontalDistance(e);
 			this.lastTouchLeft = e.touches[0].clientX;
-			//this.lastTouchMiddle = WaveformEditorComponent.touchEventHorizontalMiddle(e);
-			//this.lastTouchesX[0] = this.getCanvasX(e.touches[0].clientX);
-			//this.lastTouchesX[1] = this.getCanvasX(e.touches[1].clientX);
 		}
 	}
 
@@ -181,16 +188,20 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 			this.lastTouchDist = dist;
 			this.lastTouchLeft = left;
 
+		} else {
+			return;
 		}
 
 		this.fixCanvasOffset();
 		this.drawIfPossible();
+		this.overlayDraw();
 
 	}
 
 	canvasClick(e: MouseEvent) {
 		if (this.audioBuffer != null) {
-			const touchRatio = this.getCanvasX(e.clientX) / this.canvas.width;
+			const realWidth = this.canvas.width * this.canvasZoom;
+			const touchRatio = (this.canvasOffset + this.getCanvasX(e.clientX)) / realWidth;
 			this.setStartTime(touchRatio * this.audioBuffer.duration);
 		}
 	}
@@ -285,6 +296,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		ctx.clearRect(0, 0, can.width, can.height);
 
 		const channel = data.channel(0);
+		const audioDuration = this.audioBuffer.duration;
 
 		const realWidth = this.canvasZoom * can.width;
 		const realOffset = this.canvasOffset;
@@ -339,7 +351,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 
 		if (this.showTimeTicks || this.showTimeLabels) {
 
-			const optimalTimeInterval = this.audioBuffer.duration / this.canvasZoom / maxTimeTicksCount;
+			const optimalTimeInterval = audioDuration / this.canvasZoom / maxTimeTicksCount;
 			const realTimeInterval =
 				(optimalTimeInterval < 0.1) ? 0.1 :
 				(optimalTimeInterval < 0.25) ? 0.25 :
@@ -353,7 +365,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 				(optimalTimeInterval < 60) ? 60 :
 				Math.ceil(optimalTimeInterval);
 
-			const pixelsPerSecond = realWidth / this.audioBuffer.duration;
+			const pixelsPerSecond = realWidth / audioDuration;
 
 			ctx.strokeStyle = "#999";
 			ctx.textAlign = "center";
@@ -362,7 +374,8 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 
 			const durationPrecision = (realTimeInterval < 1) ? 2 : 0;
 
-			for (let factor = 1, time, dur = this.audioBuffer.duration; (time = factor * realTimeInterval) < dur; factor++) {
+			ctx.beginPath();
+			for (let factor = 1, time, dur = audioDuration; (time = factor * realTimeInterval) < dur; factor++) {
 				const x = time * pixelsPerSecond - realOffset;
 				if (this.showTimeTicks) {
 					ctx.moveTo(x, can.height);
@@ -373,7 +386,38 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 					ctx.fillText(formatDuration(time, durationPrecision), x, can.height - (this.showTimeTicks ? 15 : 7));
 				}
 			}
+			ctx.closePath();
 
+		}
+
+	}
+
+	// Common for all cursors //
+
+	private overlayDraw() {
+
+		const can = this.overlayCanvas;
+		const ctx = this.overlayCtx;
+
+		ctx.clearRect(0, 0, can.width, can.height);
+
+		if (this.audioBuffer == null) {
+			return;
+		}
+
+		const realWidth = this.canvasZoom * can.width;
+		const realOffset = this.canvasOffset;
+		const pixelsPerSecond = realWidth / this.audioBuffer.duration;
+
+		const startCursorPosition = this.startRefTime * pixelsPerSecond;
+		ctx.fillStyle = "#ababab";
+		ctx.fillRect(startCursorPosition - 1 - realOffset, 0, 2, can.height);
+
+		if (this.refTime != null) {
+			const realTime = this.refTime + (this.refRealTime == null ? 0 : (this.audioCtx.currentTime - this.refRealTime));
+			const cursorPosition = realTime * pixelsPerSecond;
+			ctx.fillStyle = "#387ffe";
+			ctx.fillRect(cursorPosition - 1 - realOffset, 0, 2, can.height);
 		}
 
 	}
@@ -388,24 +432,20 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 
 	private updateCanvasSize() {
 
-		// const containerElement = this.containerRef.nativeElement as HTMLElement;
-		// const oldCenter = (containerElement.scrollLeft + (this.parentWidth / 2)) / this.canvas.width;
-
 		// Je n'ai pas réussit à utiliser les propriété directement dans le template, le rafraichissement était bugué.
-		// this.canvas.width = Math.floor(this.parentWidth * this.canvasZoom);
 		this.canvas.width = this.parentWidth;
 		this.canvas.height = this.parentHeight;
-
-		// On met à jour le scroll pour que le zoom se fasse par rapport au centre de l'écran.
-		// containerElement.scrollLeft = (oldCenter * this.canvas.width) - (this.parentWidth / 2);
+		this.overlayCanvas.width = this.parentWidth;
+		this.overlayCanvas.height = this.parentHeight;
 
 		this.fixCanvasOffset();
 
-		this.updateCursor();
-		this.updateStartCursor();
-		this.updateMarkers();
+		// this.updateCursor();
+		// this.updateStartCursor();
+		// this.updateMarkers();
 
 		this.drawIfPossible();
+		this.overlayDraw();
 
 	}
 
@@ -424,7 +464,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		}
 	}
 
-	private ensureScrollTo(position: number) {
+	/*private ensureScrollTo(position: number) {
 
 		const containerElement = this.containerRef.nativeElement as HTMLElement;
 		const scrollStart = containerElement.scrollLeft;
@@ -436,7 +476,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 			containerElement.scrollLeft = position - 30;
 		}
 
-	}
+	}*/
 
 	// Common for public API //
 
@@ -449,21 +489,12 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		return endPromise;
 	}
 
-	// Common for all cursors //
-
-	private computeCursorOffset(time: number): number {
-		if (this.audioBuffer != null) {
-			return time / this.audioBuffer.duration * this.canvas.width;
-		} else {
-			return 0;
-		}
-	}
-
 	// Internal Cursor //
 
 	private scheduleUpdateCursor() {
 		this.updateCursorHandle = window.setInterval(() => {
-			this.updateCursor(true);
+			this.overlayDraw();
+			// this.updateCursor(true); TODO
 		}, 10);
 	}
 
@@ -472,7 +503,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		this.updateCursorHandle = null;
 	}
 
-	private updateCursor(ensureScroll: boolean = false) {
+	/*private updateCursor(ensureScroll: boolean = false) {
 
 		if (this.refTime != null && this.audioBuffer != null) {
 			const realTime = this.refTime + (this.refRealTime == null ? 0 : (this.audioCtx.currentTime - this.refRealTime));
@@ -482,7 +513,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		}
 
 		if (ensureScroll) {
-			this.ensureScrollTo(this.cursorPosition);
+			//this.ensureScrollTo(this.cursorPosition);
 		}
 
 	}
@@ -490,18 +521,18 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 	private updateStartCursor(ensureScroll: boolean = false) {
 		this.startCursorPosition = this.computeCursorOffset(this.startRefTime);
 		if (ensureScroll) {
-			this.ensureScrollTo(this.startCursorPosition);
+			//this.ensureScrollTo(this.startCursorPosition);
 		}
-	}
+	}*/
 
 	// Internal Markers //
 
-	private updateMarkers() {
+	/*private updateMarkers() {
 		for (let marker of this.markers) {
 			marker.offset = this.computeCursorOffset(marker.start);
 			marker.width = this.computeCursorOffset(marker.end) - marker.offset;
 		}
-	}
+	}*/
 
 	private isMarkerHover(marker: InternalWaveformMarker) {
 		return this.startRefTime >= marker.start && this.startRefTime < marker.end;
@@ -614,6 +645,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 			const wasPaused = (this.refRealTime == null);
 			this.refTime = null;
 			this.refRealTime = null;
+			this.overlayDraw();
 			if (wasPaused) {
 				// this.updateCursor(true);
 			} else {
@@ -647,8 +679,9 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		}
 
 		this.startRefTime = time;
-		this.updateStartCursor(!this.isPlaying());
-		this.updateMarkerHover();
+		this.overlayDraw();
+		// this.updateStartCursor(!this.isPlaying());
+		// this.updateMarkerHover();
 
 	}
 
@@ -680,7 +713,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 			}
 		}
 
-		const startOffset = this.computeCursorOffset(start);
+		/*const startOffset = this.computeCursorOffset(start);
 
 		// marker.hover = this.isMarkerHover(marker); TODO
 		this.selectedMarker = this.markers.length;
@@ -689,7 +722,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 			end: end,
 			offset: this.computeCursorOffset(start),
 			width: this.computeCursorOffset(end) - startOffset
-		});
+		});*/
 
 		return true;
 

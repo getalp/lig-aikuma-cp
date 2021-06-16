@@ -3,6 +3,8 @@
 	height: 200px;
 }
 
+
+
 .waveform-editor-container {
 	position: absolute;
 	overflow-x: scroll;
@@ -13,6 +15,13 @@
 	border-bottom-style: solid;
 	border-color: #ababab;
 	border-width: 2px;
+}
+
+.waveform-editor-overlay-canvas {
+	position: absolute;
+	left: 0;
+	top: 0;
+	z-index: 1;
 }
 
 .waveform-editor-cursor {
