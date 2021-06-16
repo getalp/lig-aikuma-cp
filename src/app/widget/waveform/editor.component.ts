@@ -55,7 +55,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 	// Last data
 	private lastUri: string;
 	private lastTouchDist: number = 0;
-	private lastTouchMiddle: number = 0;
+	private lastTouchLeft: number = 0;
 
 	// Sizes and zoom
 	private canvasZoom: number = 2;
@@ -130,41 +130,36 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 	canvasTouchStart(e: TouchEvent) {
 		if (e.touches.length === 1) {
 			this.lastTouchDist = 0;
-			this.lastTouchMiddle = e.touches[0].clientX;
+			this.lastTouchLeft = e.touches[0].clientX;
 		} else if (e.touches.length === 2) {
 			this.lastTouchDist = WaveformEditorComponent.touchEventHorizontalDistance(e);
-			this.lastTouchMiddle = WaveformEditorComponent.touchEventHorizontalMiddle(e);
+			this.lastTouchLeft = e.touches[0].clientX;
+			//this.lastTouchMiddle = WaveformEditorComponent.touchEventHorizontalMiddle(e);
+			//this.lastTouchesX[0] = this.getCanvasX(e.touches[0].clientX);
+			//this.lastTouchesX[1] = this.getCanvasX(e.touches[1].clientX);
 		}
 	}
 
 	canvasTouchMove(e: TouchEvent) {
 
-		let dist = 0, middle = null;
-
 		if (e.touches.length === 1) {
-			middle = e.touches[0].clientX;
-		} else if (e.touches.length === 2) {
-			dist = WaveformEditorComponent.touchEventHorizontalDistance(e);
-			middle = WaveformEditorComponent.touchEventHorizontalMiddle(e);
-		}
 
-		if (middle != null) {
+			const left = e.touches[0].clientX;
+			const leftDiff = this.lastTouchLeft - left;
+			this.canvasOffset += leftDiff;
+			this.lastTouchLeft = left;
+
+		} else if (e.touches.length === 2) {
+
+			const dist = WaveformEditorComponent.touchEventHorizontalDistance(e);
+			const left = e.touches[0].clientX;
 
 			if (this.lastTouchDist > 0 && dist > 0) {
 
+				const oldRealWidth = this.canvas.width * this.canvasZoom;
+
 				const distRatio = dist / this.lastTouchDist;
-				this.lastTouchDist = dist;
 				this.canvasZoom *= distRatio;
-
-				const lastMiddleRatio = 1 - (this.getCanvasX(this.lastTouchMiddle) / this.canvas.width);
-				const canvasSizeDiff = this.canvas.width * (distRatio - 1);
-				this.canvasOffset += canvasSizeDiff * lastMiddleRatio;
-
-				console.log(
-					"distRatio: " + distRatio.toFixed(4) +
-					", lastMiddleRatio: " + lastMiddleRatio.toFixed(2) +
-					", canvasSizeDiff: " + canvasSizeDiff.toFixed(2) +
-					", addToOffset: " + (canvasSizeDiff * lastMiddleRatio).toFixed(3));
 
 				if (this.canvasZoom < WaveformEditorComponent.MIN_ZOOM) {
 					this.canvasZoom = WaveformEditorComponent.MIN_ZOOM;
@@ -172,20 +167,24 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 					this.canvasZoom = WaveformEditorComponent.MAX_ZOOM;
 				}
 
+				const realWidth = this.canvas.width * this.canvasZoom;
+				const touchLeftRealOffset = this.canvasOffset + this.getCanvasX(this.lastTouchLeft);
+				const touchLeftRatio = touchLeftRealOffset / oldRealWidth;
+				const canvasSizeDiff = realWidth - oldRealWidth;
+				this.canvasOffset += canvasSizeDiff * touchLeftRatio;
+
+				const leftDiff = this.lastTouchLeft - left;
+				this.canvasOffset += leftDiff;
+
 			}
 
-			const middleDiff = this.lastTouchMiddle - middle;
-			this.canvasOffset += middleDiff;
-			this.lastTouchMiddle = middle;
-
-			this.fixCanvasOffset();
-			this.drawIfPossible();
-
-			/*if (distRatio != null) {
-				this.canvasOffset *= distRatio;
-			}*/
+			this.lastTouchDist = dist;
+			this.lastTouchLeft = left;
 
 		}
+
+		this.fixCanvasOffset();
+		this.drawIfPossible();
 
 	}
 
