@@ -48,10 +48,6 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 	private refRealTime: number | null = null;
 	private updateCursorHandle?: number;
 
-	// Exposed cursors positions;
-	// public startCursorPosition: number = 0;
-	// public cursorPosition: number = 0;
-
 	// Markers
 	public markers: InternalWaveformMarker[] = [];
 	public selectedMarker: number | null = null;
@@ -123,16 +119,8 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		return Math.abs(t0.screenX - t1.screenX);
 	}
 
-	private static touchHorizontalMiddle(t0: Touch, t1: Touch): number {
-		return (t0.screenX + t1.screenX) / 2;
-	}
-
 	private static touchEventHorizontalDistance(e: TouchEvent): number {
 		return this.touchHorizontalDistance(e.touches[0], e.touches[1]);
-	}
-
-	private static touchEventHorizontalMiddle(e: TouchEvent): number {
-		return this.touchHorizontalMiddle(e.touches[0], e.touches[1]);
 	}
 
 	// Canvas Touch //
@@ -646,11 +634,8 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 			this.refTime = null;
 			this.refRealTime = null;
 			this.overlayDraw();
-			if (wasPaused) {
-				// this.updateCursor(true);
-			} else {
+			if (!wasPaused) {
 				this.stopUpdateCursor();
-				// this.updateCursor(true);
 				await this.stopAudioBufferSource();
 			}
 		}

@@ -3,8 +3,6 @@
 	height: 200px;
 }
 
-
-
 .waveform-editor-container {
 	position: absolute;
 	overflow-x: scroll;
@@ -24,7 +22,7 @@
 	z-index: 1;
 }
 
-.waveform-editor-cursor {
+/*.waveform-editor-cursor {
 	position: absolute;
 	width: 2px;
 	height: 100%;
@@ -51,4 +49,4 @@
 
 .waveform-editor-cursor.marker.selected {
 	background-color: rgba(47, 224, 34, 0.1);
-}
+}*/
