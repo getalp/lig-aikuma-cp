@@ -642,6 +642,9 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		this.waveformData = null; // Reset the waveform data to force computation.
 		this.audioBuffer = null;
 		this.markers.splice(0, this.markers.length);
+		this.selectedMarkerIndex = null;
+		this.selectedMarkerCanvasOffsets = null;
+		this.selectedMarkerHandling = null;
 		this.drawIfPossible();
 		this.overlayDraw(false);
 	}
@@ -839,6 +842,15 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 
 	getSelectedMarker(): WaveformMarker | null {
 		return (this.selectedMarkerIndex == null) ? null : this.markers[this.selectedMarkerIndex];
+	}
+
+	popSelectedMarker(): WaveformMarker | null {
+		if (this.selectedMarkerIndex != null) {
+			const marker = this.markers.splice(this.selectedMarkerIndex, 1)[0];
+			this.overlayDraw(false);
+			return marker;
+		}
+		return null;
 	}
 
 }

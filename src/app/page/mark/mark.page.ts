@@ -14,7 +14,7 @@ export class MarkPage implements OnInit {
 
 	@ViewChild("waveform")
 	private waveformEditorRef: WaveformEditorComponent;
-	private task = new ProgressiveTask();
+	// private task = new ProgressiveTask();
 
 	public record: Record;
 
@@ -28,7 +28,7 @@ export class MarkPage implements OnInit {
 		this.record = await this.recordService.getRecord(recordDirName);
 	}
 
-	private static getTaskDurationFactor(duration: number): number {
+	/*private static getTaskDurationFactor(duration: number): number {
 		return Math.log(1 + duration / 20) * 5;
 	}
 
@@ -48,20 +48,20 @@ export class MarkPage implements OnInit {
 
 	actionStop() {
 		this.task.stop();
-	}
+	}*/
 
 	addMarker() {
 		this.waveformEditorRef.addMarkerAtStartTime();
 	}
 
 	removeMarker() {
-		// this.waveformEditorRef.removeSelectedMarkers();
+		this.waveformEditorRef.popSelectedMarker();
 	}
 
 }
 
 
-class ProgressiveTask {
+/*class ProgressiveTask {
 
 	private taskHandle: number | null = null;
 	private taskStart: number | null = null;
@@ -82,4 +82,4 @@ class ProgressiveTask {
 		}
 	}
 
-}
+}*/
