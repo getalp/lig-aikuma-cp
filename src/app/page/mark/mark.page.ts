@@ -51,23 +51,11 @@ export class MarkPage implements OnInit {
 	}
 
 	addMarker() {
-		this.waveformEditorRef.addMarkerAtStartTime(1);
+		this.waveformEditorRef.addMarkerAtStartTime();
 	}
 
 	removeMarker() {
 		// this.waveformEditorRef.removeSelectedMarkers();
-	}
-
-	backwardMarker() {
-		this.task.start(dur => {
-			this.waveformEditorRef.moveSelectedMarkers(-MarkPage.getTaskDurationFactor(dur));
-		}, 50);
-	}
-
-	forwardMarker() {
-		this.task.start(dur => {
-			this.waveformEditorRef.moveSelectedMarkers(MarkPage.getTaskDurationFactor(dur));
-		}, 50);
 	}
 
 }

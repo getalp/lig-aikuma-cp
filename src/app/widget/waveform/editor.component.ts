@@ -16,6 +16,8 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 
 	private static readonly MIN_ZOOM = 1;
 	private static readonly MAX_ZOOM = 6;
+	private static readonly MIN_MARKER_DURATION = 5;
+	private static readonly MIN_MARKER_SPACE = 1;
 
 	@ViewChild("container")
 	private containerRef: ElementRef;
@@ -49,9 +51,10 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 	private updateCursorHandle?: number;
 
 	// Markers
-	public markers: InternalWaveformMarker[] = [];
-	public selectedMarker: number | null = null;
-	private markerMoveHandle: number | null = null;
+	public markers: WaveformMarker[] = [];
+	public selectedMarkerIndex: number | null = null;
+	public selectedMarkerCanvasOffsets: [number, number] | null = null;
+	public selectedMarkerHandling: "start" | "end" | null = null;
 
 	// Last data
 	private lastUri: string;
@@ -126,23 +129,87 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 	// Canvas Touch //
 
 	canvasTouchStart(e: TouchEvent) {
-		if (e.touches.length === 1) {
-			this.lastTouchDist = 0;
-			this.lastTouchLeft = e.touches[0].clientX;
-		} else if (e.touches.length === 2) {
-			this.lastTouchDist = WaveformEditorComponent.touchEventHorizontalDistance(e);
-			this.lastTouchLeft = e.touches[0].clientX;
+		if (this.audioBuffer != null) {
+			if (e.touches.length === 1) {
+				this.lastTouchDist = 0;
+				this.lastTouchLeft = e.touches[0].clientX;
+				if (this.selectedMarkerCanvasOffsets != null) {
+					const canvasX = this.getCanvasX(this.lastTouchLeft);
+					const startX = this.selectedMarkerCanvasOffsets[0];
+					const endX = this.selectedMarkerCanvasOffsets[1];
+					if (canvasX >= startX && canvasX <= startX + 30) {
+						this.selectedMarkerHandling = "start";
+					} else if (canvasX >= endX - 30 && canvasX <= endX) {
+						this.selectedMarkerHandling = "end";
+					} else {
+						this.selectedMarkerHandling = null;
+					}
+				}
+			} else if (e.touches.length === 2) {
+				this.lastTouchDist = WaveformEditorComponent.touchEventHorizontalDistance(e);
+				this.lastTouchLeft = e.touches[0].clientX;
+			}
 		}
 	}
 
 	canvasTouchMove(e: TouchEvent) {
 
+		if (this.audioBuffer == null) {
+			return;
+		}
+
 		if (e.touches.length === 1) {
 
 			const left = e.touches[0].clientX;
 			const leftDiff = this.lastTouchLeft - left;
-			this.canvasOffset += leftDiff;
 			this.lastTouchLeft = left;
+
+			// Algorithm to change marker limits
+			if (this.selectedMarkerHandling != null && this.selectedMarkerIndex != null) {
+				const marker = this.markers[this.selectedMarkerIndex];
+				const secondsPerPixel = this.audioBuffer.duration / (this.canvasZoom * this.canvas.width);
+				const leftDiffInSeconds = leftDiff * secondsPerPixel;
+				const minDuration = WaveformEditorComponent.MIN_MARKER_DURATION;
+				if (this.selectedMarkerHandling === "start") {
+					marker.start -= leftDiffInSeconds;
+					if (marker.start > marker.end - minDuration) {
+						marker.start = marker.end - minDuration;
+					} else {
+						let leftLimit = 0;
+						for (let otherMarker of this.markers) {
+							if (otherMarker.end < marker.end && otherMarker !== marker) {
+								if (otherMarker.end > leftLimit) {
+									leftLimit = otherMarker.end;
+								}
+							}
+						}
+						leftLimit += WaveformEditorComponent.MIN_MARKER_SPACE;
+						if (marker.start < leftLimit) {
+							marker.start = leftLimit;
+						}
+					}
+				} else if (this.selectedMarkerHandling === "end") {
+					marker.end -= leftDiffInSeconds;
+					if (marker.end < marker.start + minDuration) {
+						marker.end = marker.start + minDuration;
+					} else {
+						let rightLimit = this.audioBuffer.duration;
+						for (let otherMarker of this.markers) {
+							if (otherMarker.start > marker.start && otherMarker !== marker) {
+								if (otherMarker.start < rightLimit) {
+									rightLimit = otherMarker.start;
+								}
+							}
+						}
+						rightLimit -= WaveformEditorComponent.MIN_MARKER_SPACE;
+						if (marker.end > rightLimit) {
+							marker.end = rightLimit;
+						}
+					}
+				}
+			} else {
+				this.canvasOffset += leftDiff;
+			}
 
 		} else if (e.touches.length === 2) {
 
@@ -190,23 +257,26 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		if (this.audioBuffer != null) {
 			const realWidth = this.canvas.width * this.canvasZoom;
 			const touchRatio = (this.canvasOffset + this.getCanvasX(e.clientX)) / realWidth;
-			this.setStartTime(touchRatio * this.audioBuffer.duration);
+			const touchTime = touchRatio * this.audioBuffer.duration;
+			if (this.selectedMarkerIndex != null) {
+				const selectedMarker = this.markers[this.selectedMarkerIndex];
+				if (touchTime < selectedMarker.start || touchTime > selectedMarker.end) {
+					this.selectedMarkerIndex = null;
+				}
+			}
+			if (this.selectedMarkerIndex == null) {
+				const touchMarkerIndex = this.getMarkerIndexAt(touchTime);
+				if (touchMarkerIndex != null) {
+					this.selectedMarkerIndex = touchMarkerIndex;
+				}
+			}
+			this.setStartTime(touchTime);
 		}
 	}
 
 	private getCanvasX(clientX: number): number {
 		const canvasRect = this.canvas.getBoundingClientRect();
 		return clientX - canvasRect.left;
-	}
-
-	// Marker Touch //
-
-	markerClicked(markerIndex: number) {
-		if (this.selectedMarker === markerIndex) {
-			this.selectedMarker = null;
-		} else {
-			this.selectedMarker = markerIndex;
-		}
 	}
 
 	// Draw //
@@ -387,8 +457,6 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 
 	}
 
-	// Common for all cursors //
-
 	private overlayDraw(ensureCursorOffset: boolean) {
 
 		const can = this.overlayCanvas;
@@ -400,8 +468,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 			return;
 		}
 
-		const realWidth = this.canvasZoom * can.width;
-		const pixelsPerSecond = realWidth / this.audioBuffer.duration;
+		const pixelsPerSecond = (this.canvasZoom * can.width) / this.audioBuffer.duration;
 
 		// Compute cursor positions first
 		const startCursorPosition = this.startRefTime * pixelsPerSecond;
@@ -413,6 +480,26 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 			this.ensureCanvasOffsetTo((cursorPosition == null) ? startCursorPosition : cursorPosition);
 		}
 
+		// Markers
+		ctx.fillStyle = "#387ffe";
+		ctx.globalAlpha = 0.1;
+		this.selectedMarkerCanvasOffsets = null;
+		for (let i = 0, j = this.markers.length; i < j; ++i) {
+			const marker = this.markers[i];
+			const selected = (this.selectedMarkerIndex === i);
+			const x = marker.start * pixelsPerSecond - this.canvasOffset;
+			const width = (marker.end - marker.start) * pixelsPerSecond;
+			if (selected) {
+				ctx.globalAlpha = 0.2;
+				this.selectedMarkerCanvasOffsets = [x, x + width];
+			}
+			ctx.fillRect(x, 0, width, can.height);
+			if (selected) {
+				ctx.globalAlpha = 0.1;
+			}
+		}
+		ctx.globalAlpha = 1.0;
+
 		// Start cursor
 		ctx.fillStyle = "#ababab";
 		ctx.fillRect(startCursorPosition - 1 - this.canvasOffset, 0, 2, can.height);
@@ -421,6 +508,28 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		if (cursorPosition != null) {
 			ctx.fillStyle = "#387ffe";
 			ctx.fillRect(cursorPosition - 1 - this.canvasOffset, 0, 2, can.height);
+		}
+
+		// Selected marker handles
+		if (this.selectedMarkerCanvasOffsets != null) {
+			const startX = this.selectedMarkerCanvasOffsets[0];
+			const endX = this.selectedMarkerCanvasOffsets[1];
+			const midHeight = can.height / 2;
+			ctx.fillStyle = "#555555";
+			ctx.fillRect(startX, midHeight - 50, 20, 100);
+			ctx.fillRect(endX - 20, midHeight - 50, 20, 100);
+			ctx.strokeStyle = "#dddddd";
+			ctx.beginPath();
+			ctx.moveTo(startX + 12, midHeight - 10);
+			ctx.lineTo(startX + 12, midHeight + 10);
+			ctx.moveTo(startX + 8, midHeight - 10);
+			ctx.lineTo(startX + 8, midHeight + 10);
+			ctx.moveTo(endX - 12, midHeight - 10);
+			ctx.lineTo(endX - 12, midHeight + 10);
+			ctx.moveTo(endX - 8, midHeight - 10);
+			ctx.lineTo(endX - 8, midHeight + 10);
+			ctx.closePath();
+			ctx.stroke();
 		}
 
 	}
@@ -442,10 +551,6 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		this.overlayCanvas.height = this.parentHeight;
 
 		this.fixCanvasOffset();
-
-		// this.updateCursor();
-		// this.updateStartCursor();
-		// this.updateMarkers();
 
 		this.drawIfPossible();
 		this.overlayDraw(false);
@@ -481,20 +586,6 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		this.drawIfPossible();
 	}
 
-	/*private ensureScrollTo(position: number) {
-
-		const containerElement = this.containerRef.nativeElement as HTMLElement;
-		const scrollStart = containerElement.scrollLeft;
-		const scrollEnd = scrollStart + this.parentWidth;
-
-		if (position < scrollStart) {
-			containerElement.scrollLeft = position - this.parentWidth + 30;
-		} else if (position > scrollEnd) {
-			containerElement.scrollLeft = position - 30;
-		}
-
-	}*/
-
 	// Common for public API //
 
 	private stopAudioBufferSource(): Promise<void> {
@@ -511,54 +602,12 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 	private scheduleUpdateCursor() {
 		this.updateCursorHandle = window.setInterval(() => {
 			this.overlayDraw(true);
-			// this.updateCursor(true); TODO
 		}, 10);
 	}
 
 	private stopUpdateCursor() {
 		window.clearInterval(this.updateCursorHandle);
 		this.updateCursorHandle = null;
-	}
-
-	/*private updateCursor(ensureScroll: boolean = false) {
-
-		if (this.refTime != null && this.audioBuffer != null) {
-			const realTime = this.refTime + (this.refRealTime == null ? 0 : (this.audioCtx.currentTime - this.refRealTime));
-			this.cursorPosition = this.computeCursorOffset(realTime);
-		} else {
-			this.cursorPosition = 0;
-		}
-
-		if (ensureScroll) {
-			//this.ensureScrollTo(this.cursorPosition);
-		}
-
-	}
-
-	private updateStartCursor(ensureScroll: boolean = false) {
-		this.startCursorPosition = this.computeCursorOffset(this.startRefTime);
-		if (ensureScroll) {
-			//this.ensureScrollTo(this.startCursorPosition);
-		}
-	}*/
-
-	// Internal Markers //
-
-	/*private updateMarkers() {
-		for (let marker of this.markers) {
-			marker.offset = this.computeCursorOffset(marker.start);
-			marker.width = this.computeCursorOffset(marker.end) - marker.offset;
-		}
-	}*/
-
-	private isMarkerHover(marker: InternalWaveformMarker) {
-		return this.startRefTime >= marker.start && this.startRefTime < marker.end;
-	}
-
-	private updateMarkerHover() {
-		/*for (let marker of this.markers) { TODO
-			marker.hover = this.isMarkerHover(marker);
-		}*/
 	}
 
 	// Public API //
@@ -592,7 +641,9 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		this.audioArray = buf;
 		this.waveformData = null; // Reset the waveform data to force computation.
 		this.audioBuffer = null;
+		this.markers.splice(0, this.markers.length);
 		this.drawIfPossible();
+		this.overlayDraw(false);
 	}
 
 	isLoaded(): boolean {
@@ -694,8 +745,6 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 
 		this.startRefTime = time;
 		this.overlayDraw(true);
-		// this.updateStartCursor(!this.isPlaying());
-		// this.updateMarkerHover();
 
 	}
 
@@ -709,64 +758,87 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 
 	// Markers
 
-	addMarker(start: number, end: number, autoShrink: boolean = true): boolean {
-
-		if (autoShrink) {
-			for (let marker of this.markers) {
-				if (start >= marker.start && start <= marker.end) {
-					return false;
-				} else if (end > marker.start && start < marker.end) {
-					end = marker.start;
-				}
+	private getMarkerIndexAt(time: number): number | null {
+		for (let i = 0, j = this.markers.length; i < j; ++i) {
+			const marker = this.markers[i];
+			if (time >= marker.start && time <= marker.end) {
+				return i;
 			}
-		} else {
-			for (let marker of this.markers) {
-				if (start < marker.end && end > marker.start) {
-					return false;
+		}
+		return null;
+	}
+
+	addMarker(at: number): boolean {
+
+		if (this.audioBuffer == null) {
+			return;
+		}
+
+		let leftLimit = 0;
+		let rightLimit = this.audioBuffer.duration;
+
+		for (let marker of this.markers) {
+			if (at >= marker.start && at <= marker.end) {
+				return false;
+			} else if (at < marker.start) {
+				if (marker.start < rightLimit) {
+					rightLimit = marker.start;
+				}
+			} else if (at > marker.end) {
+				if (marker.end > leftLimit) {
+					leftLimit = marker.end;
 				}
 			}
 		}
 
-		/*const startOffset = this.computeCursorOffset(start);
+		leftLimit += WaveformEditorComponent.MIN_MARKER_SPACE;
+		rightLimit -= WaveformEditorComponent.MIN_MARKER_SPACE;
 
-		// marker.hover = this.isMarkerHover(marker); TODO
-		this.selectedMarker = this.markers.length;
-		this.markers.push({
-			start: start,
-			end: end,
-			offset: this.computeCursorOffset(start),
-			width: this.computeCursorOffset(end) - startOffset
-		});*/
+		if (rightLimit - leftLimit < WaveformEditorComponent.MIN_MARKER_DURATION) {
+			return false;
+		}
 
+		// TODO: Simplifier l'algo (possible je pense)
+
+		let duration = Math.min(rightLimit - leftLimit, this.audioBuffer.duration / 10);
+		const marker: WaveformMarker = {
+			start: at - duration / 2,
+			end: at + duration / 2
+		};
+
+		const needStartShift = (marker.start <= leftLimit);
+		if (needStartShift) {
+			const diff = leftLimit - marker.start;
+			marker.start += diff;
+			marker.end = marker.start + duration;
+		}
+
+		if (marker.end >= rightLimit) {
+			const diff = marker.end - rightLimit;
+			if (!needStartShift) {
+				marker.start -= diff;
+			} else {
+				duration -= diff;
+			}
+			marker.end = marker.start + duration;
+		}
+
+		if (marker.end - marker.start < WaveformEditorComponent.MIN_MARKER_DURATION) {
+			return false;
+		}
+
+		this.markers.push(marker);
+		this.overlayDraw(false);
 		return true;
 
 	}
 
-	addMarkerAtStartTime(duration: number) {
-		this.addMarker(this.startRefTime, this.startRefTime + duration);
+	addMarkerAtStartTime() {
+		this.addMarker(this.startRefTime);
 	}
 
-	getSelectedMarker(): WaveformMarker {
-		return this.markers[this.selectedMarker];
-	}
-
-	/*getSelectedMarkers(): WaveformMarker[] {
-		return this.markers.filter(marker => marker.hover);
-	}
-
-	removeSelectedMarkers() {
-		this.markers = this.markers.filter(marker => !marker.hover);
-	}*/
-
-	moveSelectedMarkers(delta: number) {
-		/*for (let marker of this.markers) {
-			if (marker.hover) {
-				marker.start += delta
-				marker.end += delta;
-			}
-		}
-		this.updateMarkers();
-		this.moveStartTime(delta);*/
+	getSelectedMarker(): WaveformMarker | null {
+		return (this.selectedMarkerIndex == null) ? null : this.markers[this.selectedMarkerIndex];
 	}
 
 }
@@ -775,10 +847,4 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 export interface WaveformMarker {
 	start: number,
 	end: number,
-}
-
-
-interface InternalWaveformMarker extends WaveformMarker {
-	offset: number,
-	width: number
 }
