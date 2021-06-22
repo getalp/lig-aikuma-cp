@@ -182,7 +182,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 
 		this.fixCanvasOffset();
 		this.drawIfPossible();
-		this.overlayDraw();
+		this.overlayDraw(false);
 
 	}
 
@@ -311,6 +311,11 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 
 		for (let i = 0; i < barCount; ++i) {
 
+			const barOffset = i * barTotalWidth - realOffset;
+
+			if (barOffset + barWidth < 0 || barOffset >= can.width)
+				continue;
+
 			let maxSample = 0;
 			let minSample = 0;
 
@@ -328,10 +333,10 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 			const minHeight = bottomHeight * (minSample / barSamplesFloor / -this.waveformMaxSample);
 
 			ctx.fillStyle = "#333";
-			ctx.fillRect(i * barTotalWidth - realOffset, topHeight - maxHeight, barWidth, maxHeight);
+			ctx.fillRect(barOffset, topHeight - maxHeight, barWidth, maxHeight);
 
 			ctx.fillStyle = "#999";
-			ctx.fillRect(i * barTotalWidth - realOffset, topHeight, barWidth, minHeight);
+			ctx.fillRect(barOffset, topHeight, barWidth, minHeight);
 
 		}
 
@@ -365,13 +370,15 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 			ctx.beginPath();
 			for (let factor = 1, time, dur = audioDuration; (time = factor * realTimeInterval) < dur; factor++) {
 				const x = time * pixelsPerSecond - realOffset;
-				if (this.showTimeTicks) {
-					ctx.moveTo(x, can.height);
-					ctx.lineTo(x, can.height - 10);
-					ctx.stroke();
-				}
-				if (this.showTimeLabels) {
-					ctx.fillText(formatDuration(time, durationPrecision), x, can.height - (this.showTimeTicks ? 15 : 7));
+				if (x >= 0 && x < can.width) {
+					if (this.showTimeTicks) {
+						ctx.moveTo(x, can.height);
+						ctx.lineTo(x, can.height - 10);
+						ctx.stroke();
+					}
+					if (this.showTimeLabels) {
+						ctx.fillText(formatDuration(time, durationPrecision), x, can.height - (this.showTimeTicks ? 15 : 7));
+					}
 				}
 			}
 			ctx.closePath();
@@ -382,7 +389,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 
 	// Common for all cursors //
 
-	private overlayDraw() {
+	private overlayDraw(ensureCursorOffset: boolean) {
 
 		const can = this.overlayCanvas;
 		const ctx = this.overlayCtx;
@@ -394,18 +401,26 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		}
 
 		const realWidth = this.canvasZoom * can.width;
-		const realOffset = this.canvasOffset;
 		const pixelsPerSecond = realWidth / this.audioBuffer.duration;
 
+		// Compute cursor positions first
 		const startCursorPosition = this.startRefTime * pixelsPerSecond;
-		ctx.fillStyle = "#ababab";
-		ctx.fillRect(startCursorPosition - 1 - realOffset, 0, 2, can.height);
+		const realTime = (this.refTime == null) ? null : this.refTime + (this.refRealTime == null ? 0 : (this.audioCtx.currentTime - this.refRealTime));
+		const cursorPosition = (realTime == null) ? null : realTime * pixelsPerSecond;
 
-		if (this.refTime != null) {
-			const realTime = this.refTime + (this.refRealTime == null ? 0 : (this.audioCtx.currentTime - this.refRealTime));
-			const cursorPosition = realTime * pixelsPerSecond;
+		// Ensure offset before drawing
+		if (ensureCursorOffset) {
+			this.ensureCanvasOffsetTo((cursorPosition == null) ? startCursorPosition : cursorPosition);
+		}
+
+		// Start cursor
+		ctx.fillStyle = "#ababab";
+		ctx.fillRect(startCursorPosition - 1 - this.canvasOffset, 0, 2, can.height);
+
+		// Time cursor
+		if (cursorPosition != null) {
 			ctx.fillStyle = "#387ffe";
-			ctx.fillRect(cursorPosition - 1 - realOffset, 0, 2, can.height);
+			ctx.fillRect(cursorPosition - 1 - this.canvasOffset, 0, 2, can.height);
 		}
 
 	}
@@ -433,7 +448,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		// this.updateMarkers();
 
 		this.drawIfPossible();
-		this.overlayDraw();
+		this.overlayDraw(false);
 
 	}
 
@@ -450,6 +465,20 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 				this.canvasOffset = maxOffset;
 			}
 		}
+	}
+
+	private ensureCanvasOffsetTo(offset: number) {
+		const offsetLeft = this.canvasOffset;
+		const offsetRight = this.canvasOffset + this.canvas.width;
+		if (offset < offsetLeft) {
+			this.canvasOffset = offset - this.parentWidth + 30;
+		} else if (offset > offsetRight) {
+			this.canvasOffset = offset - 30;
+		} else {
+			return;
+		}
+		this.fixCanvasOffset();
+		this.drawIfPossible();
 	}
 
 	/*private ensureScrollTo(position: number) {
@@ -481,7 +510,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 
 	private scheduleUpdateCursor() {
 		this.updateCursorHandle = window.setInterval(() => {
-			this.overlayDraw();
+			this.overlayDraw(true);
 			// this.updateCursor(true); TODO
 		}, 10);
 	}
@@ -633,7 +662,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 			const wasPaused = (this.refRealTime == null);
 			this.refTime = null;
 			this.refRealTime = null;
-			this.overlayDraw();
+			this.overlayDraw(false);
 			if (!wasPaused) {
 				this.stopUpdateCursor();
 				await this.stopAudioBufferSource();
@@ -664,7 +693,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		}
 
 		this.startRefTime = time;
-		this.overlayDraw();
+		this.overlayDraw(true);
 		// this.updateStartCursor(!this.isPlaying());
 		// this.updateMarkerHover();
 
