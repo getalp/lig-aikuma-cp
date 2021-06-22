@@ -1,8 +1,9 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, OnInit, ViewChild} from '@angular/core';
 import {Record} from "../../record";
 import {ActivatedRoute} from "@angular/router";
 import {RecordService} from "../../service/record.service";
 import {WaveformEditorComponent} from "../../widget/waveform/editor.component";
+import {Toast} from "@capacitor/toast";
 
 
 @Component({
@@ -10,11 +11,10 @@ import {WaveformEditorComponent} from "../../widget/waveform/editor.component";
 	templateUrl: './mark.page.html',
 	styleUrls: ['./mark.page.scss'],
 })
-export class MarkPage implements OnInit {
+export class MarkPage implements AfterViewInit {
 
 	@ViewChild("waveform")
 	private waveformEditorRef: WaveformEditorComponent;
-	// private task = new ProgressiveTask();
 
 	public record: Record;
 
@@ -23,32 +23,18 @@ export class MarkPage implements OnInit {
 		private recordService: RecordService
 	) { }
 
-	async ngOnInit() {
+	async ngAfterViewInit() {
+
 		const recordDirName = this.route.snapshot.paramMap.get("recordDirName");
 		this.record = await this.recordService.getRecord(recordDirName);
-	}
 
-	/*private static getTaskDurationFactor(duration: number): number {
-		return Math.log(1 + duration / 20) * 5;
-	}
+		// Loading the waveform from the code and not from attribute to allow awaiting.
+		await this.waveformEditorRef.load(this.record.getAacUri());
+		this.waveformEditorRef.addMarkersUnsafe(this.record.markers.map(recordMarker => {
+			return {start: recordMarker.start, end: recordMarker.end};
+		}));
 
-	backwardStart() {
-		this.waveformEditorRef.moveStartTime(-0.01);
-		this.task.start(dur => {
-			this.waveformEditorRef.moveStartTime(-MarkPage.getTaskDurationFactor(dur));
-		}, 50);
 	}
-
-	forwardStart() {
-		this.waveformEditorRef.moveStartTime(0.01);
-		this.task.start(dur => {
-			this.waveformEditorRef.moveStartTime(MarkPage.getTaskDurationFactor(dur));
-		}, 50);
-	}
-
-	actionStop() {
-		this.task.stop();
-	}*/
 
 	addMarker() {
 		this.waveformEditorRef.addMarkerAtStartTime();
@@ -58,28 +44,14 @@ export class MarkPage implements OnInit {
 		this.waveformEditorRef.popSelectedMarker();
 	}
 
-}
-
-
-/*class ProgressiveTask {
-
-	private taskHandle: number | null = null;
-	private taskStart: number | null = null;
-
-	start(handler: (dur: number) => void, interval: number) {
-		this.stop();
-		this.taskStart = Date.now();
-		this.taskHandle = window.setInterval(() => {
-			handler((Date.now() - this.taskStart) / 1000);
-		}, interval);
-	}
-
-	stop() {
-		if (this.taskHandle != null) {
-			window.clearInterval(this.taskHandle);
-			this.taskHandle = null;
-			this.taskStart = null;
+	async save() {
+		this.record.clearMarkers();
+		for (let waveformMarker of this.waveformEditorRef.markers) {
+			this.record.addMarker(waveformMarker.start, waveformMarker.end);
 		}
+		this.record.markersReady = true;
+		await this.recordService.saveRecord(this.record);
+		await Toast.show({text: "Markers saved!"});
 	}
 
-}*/
+}

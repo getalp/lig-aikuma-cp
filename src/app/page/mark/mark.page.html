@@ -7,10 +7,9 @@
 	</ion-toolbar>
 </ion-header>
 
-<ion-content fullscreen *ngIf="record != null">
+<ion-content fullscreen>
 
 	<app-waveform-editor #waveform
-						 [uri]="record.getAacUri()"
 						 [style.height]="'50%'"
 						 [style.width]="'100%'"
 						 [timeTicks]="true"
@@ -31,6 +30,12 @@
 		</ion-button>
 		<ion-button fill="clear" (click)="removeMarker()">
 			<ion-icon name="bookmark-outline"></ion-icon>&nbsp;UNMARK
+		</ion-button>
+	</div>
+
+	<div class="mark-page-control-buttons">
+		<ion-button fill="clear" (click)="save()">
+			<ion-icon name="save"></ion-icon>&nbsp;SAVE
 		</ion-button>
 	</div>
 

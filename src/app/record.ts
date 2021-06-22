@@ -49,6 +49,14 @@ export class Record {
 		return this.baseUri + ".aac";
 	}
 
+	clearMarkers() {
+		this.markers.splice(0, this.markers.length);
+	}
+
+	addMarker(start: number, end: number) {
+		this.markers.push(new RecordMarker(start, end));
+	}
+
 }
 
 
@@ -61,7 +69,8 @@ export enum RecordType {
 export class RecordMarker {
 
 	constructor(
-		public time: number
+		public start: number,
+		public end: number
 	) { }
 
 }
@@ -76,7 +85,8 @@ export interface RecordSerialized {
 	"duration": number | null,
 	"markers_ready": boolean,
 	"markers": {
-		"time": number
+		"start": number,
+		"end": number
 	}[]
 }
 
@@ -91,7 +101,7 @@ export function serializeRecord(record: Record): RecordSerialized {
 		"duration": record.duration,
 		"markers_ready": record.markersReady,
 		"markers": record.markers.map(m => {
-			return { "time": m.time };
+			return { "start": m.start, "end": m.end };
 		})
 	};
 }
@@ -105,7 +115,7 @@ export function deserializeRecord(parent: Record, raw: RecordSerialized): Record
 	record.duration = raw["duration"];
 	record.markersReady = Boolean(raw["markers_ready"]);
 	if (Array.isArray(raw["markers"])) {
-		raw["markers"].forEach(m => record.markers.push(new RecordMarker(m["time"])));
+		raw["markers"].forEach(m => record.markers.push(new RecordMarker(m["start"], m["end"])));
 	}
 	return record;
 }

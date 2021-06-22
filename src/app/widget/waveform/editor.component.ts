@@ -840,6 +840,11 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		this.addMarker(this.startRefTime);
 	}
 
+	addMarkersUnsafe(markers: WaveformMarker[]) {
+		this.markers.push(...markers);
+		this.overlayDraw(false);
+	}
+
 	getSelectedMarker(): WaveformMarker | null {
 		return (this.selectedMarkerIndex == null) ? null : this.markers[this.selectedMarkerIndex];
 	}
@@ -847,10 +852,17 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 	popSelectedMarker(): WaveformMarker | null {
 		if (this.selectedMarkerIndex != null) {
 			const marker = this.markers.splice(this.selectedMarkerIndex, 1)[0];
+			this.selectedMarkerIndex = null;
+			this.selectedMarkerCanvasOffsets = null;
+			this.selectedMarkerHandling = null;
 			this.overlayDraw(false);
 			return marker;
 		}
 		return null;
+	}
+
+	getMarkers(): WaveformMarker[] {
+		return this.markers;
 	}
 
 }

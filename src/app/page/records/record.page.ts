@@ -1,6 +1,6 @@
-import {Component, OnInit} from '@angular/core';
+import {ChangeDetectorRef, Component, OnInit} from '@angular/core';
 import {ActivatedRoute} from "@angular/router";
-import {AlertController} from "@ionic/angular";
+import {AlertController, ViewWillEnter} from "@ionic/angular";
 import {Location} from "@angular/common";
 
 import {RecordService} from "../../service/record.service";
@@ -13,7 +13,7 @@ import {Record, RecordType} from "../../record";
 	templateUrl: './record.page.html',
 	styleUrls: ['./record.page.scss'],
 })
-export class RecordPage implements OnInit {
+export class RecordPage implements OnInit, ViewWillEnter {
 
 	RecordType = RecordType
 
@@ -24,12 +24,17 @@ export class RecordPage implements OnInit {
 		private recordService: RecordService,
 		private iso639Service: Iso639Service,
 		private location: Location,
-		private alertController: AlertController
+		private alertController: AlertController,
+		private changeDetector: ChangeDetectorRef
 	) { }
 
 	async ngOnInit() {
 		const recordDirName = this.route.snapshot.paramMap.get("recordDirName");
 		this.record = await this.recordService.getRecord(recordDirName);
+	}
+
+	ionViewWillEnter(): void {
+		this.changeDetector.detectChanges();
 	}
 
 	async onDeleteClick() {
