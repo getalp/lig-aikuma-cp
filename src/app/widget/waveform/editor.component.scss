@@ -24,14 +24,14 @@
 
 .waveform-editor-loading {
 	position: absolute;
-	z-index: 10;
+	width: 100%;
 	left: 0;
 	top: 50%;
-	font-size: 21px;
-	color: #525252;
-	text-align: center;
 	transform: translateY(-50%);
-	width: 100%;
+	z-index: 2;
+	color: #525252;
+	font-size: 15px;
+	text-align: center;
 	pointer-events: none;
 	opacity: 1;
 	transition: opacity 0.5s;
