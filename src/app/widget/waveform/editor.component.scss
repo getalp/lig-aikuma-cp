@@ -40,3 +40,30 @@
 .waveform-editor-loading.hidden {
 	opacity: 0;
 }
+
+.waveform-editor-controls {
+	position: absolute;
+	left: 0;
+	top: 2px;
+	z-index: 10;
+	font-size: 0;
+}
+
+.waveform-editor-controls > .control {
+	display: inline-block;
+	font-size: 25px;
+	line-height: 25px;
+	padding: 10px 10px 6px 10px;
+	background-color: transparent;
+	color: #1a1a1a;
+	transition: background-color .2s, color .2s;
+}
+
+.waveform-editor-controls > .control:active {
+	background-color: #1a1a1a;
+	color: #e3e3e3;
+}
+
+.waveform-editor-controls > .control:last-child {
+	border-bottom-right-radius: 3px;
+}

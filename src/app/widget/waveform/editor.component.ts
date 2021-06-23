@@ -685,6 +685,10 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		return this.refTime != null && this.refRealTime == null;
 	}
 
+	isNotPaused(): boolean {
+		return this.refTime != null && this.refRealTime != null;
+	}
+
 	async play() {
 
 		// Si la lecture est en cours mais pas en pause, on stop au préalable.

@@ -12,12 +12,10 @@
 
 </div>
 
-<div [style.position]="'absolute'"
-	 [style.left.px]="0"
-	 [style.top.px]="0" [style.z-index]="1">
+<div class="waveform-editor-controls">
 
-	<ion-button (click)="play()">Start</ion-button>
-	<ion-button (click)="pause()" *ngIf="isPlaying()">Pause</ion-button>
-	<ion-button (click)="stop()" *ngIf="isPlaying()">Stop</ion-button>
+	<div class="control" (click)="play()"><ion-icon name="play"></ion-icon></div>
+	<div class="control" (click)="pause()" *ngIf="isNotPaused()"><ion-icon name="pause"></ion-icon></div>
+	<div class="control" (click)="stop()" *ngIf="isPlaying()"><ion-icon name="stop"></ion-icon></div>
 
 </div>
