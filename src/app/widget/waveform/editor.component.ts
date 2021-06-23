@@ -48,6 +48,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 	private audioBuffer: AudioBuffer;
 	private waveformData: WaveformData;
 	private waveformMaxSample: number = 0;
+	public audioLoading: boolean = false;
 
 	// Audio playing data
 	private audioBufferSource: AudioBufferSourceNode;
@@ -98,7 +99,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		this.overlayCtx = this.overlayCanvas.getContext("2d");
 
 		this.resizeSensor = new ResizeSensor(this.element.nativeElement, size => this.onResized(size));
-		this.drawIfPossible();
+		this.drawIfPossible().then();
 
 	}
 
@@ -110,18 +111,18 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 	@Input()
 	set timeTicks(enabled: boolean) {
 		this.showTimeTicks = enabled;
-		this.drawIfPossible();
+		this.drawIfPossible().then();
 	}
 
 	@Input()
 	set timeLabels(enabled: boolean) {
 		this.showTimeLabels = enabled;
-		this.drawIfPossible();
+		this.drawIfPossible().then();
 	}
 
-	private drawIfPossible() {
+	private async drawIfPossible() {
 		if (this.audioCtx != null && this.audioArray != null) {
-			this.draw();
+			await this.draw();
 		}
 	}
 
@@ -255,7 +256,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		}
 
 		this.fixCanvasOffset();
-		this.drawIfPossible();
+		this.drawIfPossible().then();
 		this.overlayDraw(false);
 
 	}
@@ -288,7 +289,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 
 	// Draw //
 
-	private draw() {
+	private async draw() {
 
 		if (this.audioCtx == null) {
 			throw "Can't draw since this component is not initialized.";
@@ -296,10 +297,8 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 			throw "Can't draw if audio was not previously loaded.";
 		}
 
-		this.ensureWaveformData()
-			.then(data => {
-				this.internalDraw(data);
-			});
+		const data = await this.ensureWaveformData();
+		this.internalDraw(data);
 
 	}
 
@@ -561,7 +560,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 
 		this.fixCanvasOffset();
 
-		this.drawIfPossible();
+		this.drawIfPossible().then();
 		this.overlayDraw(false);
 
 	}
@@ -592,7 +591,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 			return;
 		}
 		this.fixCanvasOffset();
-		this.drawIfPossible();
+		this.drawIfPossible().then();
 	}
 
 	// Common for public API //
@@ -647,6 +646,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 
 	async loadAudioArray(buf: ArrayBuffer) {
 		await this.stop();
+		this.audioLoading = true;
 		this.audioArray = buf;
 		this.waveformData = null; // Reset the waveform data to force computation.
 		this.audioBuffer = null;
@@ -654,8 +654,9 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		this.selectedMarkerIndex = null;
 		this.selectedMarkerCanvasOffsets = null;
 		this.selectedMarkerHandling = null;
-		this.drawIfPossible();
+		await this.drawIfPossible();
 		this.overlayDraw(false);
+		this.audioLoading = false;
 	}
 
 	isLoaded(): boolean {

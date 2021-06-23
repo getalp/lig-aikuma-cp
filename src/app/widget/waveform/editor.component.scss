@@ -22,31 +22,21 @@
 	z-index: 1;
 }
 
-/*.waveform-editor-cursor {
+.waveform-editor-loading {
 	position: absolute;
-	width: 2px;
-	height: 100%;
-	top: 0;
-	transform: translate(-1px, 0);
+	z-index: 10;
+	left: 0;
+	top: 50%;
+	font-size: 21px;
+	color: #525252;
+	text-align: center;
+	transform: translateY(-50%);
+	width: 100%;
+	pointer-events: none;
+	opacity: 1;
+	transition: opacity 0.5s;
 }
 
-.waveform-editor-cursor.live {
-	background-color: #387ffe;
+.waveform-editor-loading.hidden {
+	opacity: 0;
 }
-
-.waveform-editor-cursor.start {
-	background-color: #ababab;
-	// transition: left 0.2s;
-}
-
-.waveform-editor-cursor.marker {
-	border-width: 1px;
-	border-color: rgba(47, 224, 34, 0.6);
-	border-style: none solid none solid;
-	background-color: transparent;
-	transition: background-color .2s;
-}
-
-.waveform-editor-cursor.marker.selected {
-	background-color: rgba(47, 224, 34, 0.1);
-}*/
