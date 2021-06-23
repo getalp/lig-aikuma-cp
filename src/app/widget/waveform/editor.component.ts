@@ -792,6 +792,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 
 		for (let marker of this.markers) {
 			if (at >= marker.start && at <= marker.end) {
+				console.warn("Can't add marker: In marker.");
 				return false;
 			} else if (at < marker.start) {
 				if (marker.start < rightLimit) {
@@ -807,13 +808,17 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		leftLimit += WaveformEditorComponent.MIN_MARKER_SPACE;
 		rightLimit -= WaveformEditorComponent.MIN_MARKER_SPACE;
 
+		console.debug("leftLimit: " + leftLimit + ", rightLimit: " + rightLimit);
+
 		if (rightLimit - leftLimit < WaveformEditorComponent.MIN_MARKER_DURATION) {
+			console.warn("Can't add marker: Not enough preview space (" + (rightLimit - leftLimit) + ").");
 			return false;
 		}
 
-		// TODO: Simplifier l'algo (possible je pense)
+		let duration = Math.min(rightLimit - leftLimit, Math.max(WaveformEditorComponent.MIN_MARKER_DURATION, this.audioBuffer.duration / 10));
 
-		let duration = Math.min(rightLimit - leftLimit, this.audioBuffer.duration / 10);
+		console.debug("duration: " + duration);
+
 		const marker: WaveformMarker = {
 			start: at - duration / 2,
 			end: at + duration / 2
@@ -837,6 +842,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		}
 
 		if (marker.end - marker.start < WaveformEditorComponent.MIN_MARKER_DURATION) {
+			console.warn("Can't add marker: Not enough final space (" + (marker.end - marker.start) + ").");
 			return false;
 		}
 
@@ -846,8 +852,8 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 
 	}
 
-	addMarkerAtStartTime() {
-		this.addMarker(this.startRefTime);
+	addMarkerAtStartTime(): boolean {
+		return this.addMarker(this.startRefTime);
 	}
 
 	addMarkersUnsafe(markers: WaveformMarker[]) {

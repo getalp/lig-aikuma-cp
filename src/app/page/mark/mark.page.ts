@@ -36,8 +36,10 @@ export class MarkPage implements AfterViewInit {
 
 	}
 
-	addMarker() {
-		this.waveformEditorRef.addMarkerAtStartTime();
+	async addMarker() {
+		if (!this.waveformEditorRef.addMarkerAtStartTime()) {
+			await Toast.show({text: "Failed to a marker, not enough space!"});
+		}
 	}
 
 	removeMarker() {
