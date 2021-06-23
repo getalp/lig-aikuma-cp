@@ -59,6 +59,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 	private updateCursorHandle?: number;
 
 	// Markers
+	private canEditMarkers: boolean = false;
 	public markers: WaveformMarker[] = [];
 	public selectedMarkerIndex: number | null = null;
 	public selectedMarkerCanvasOffsets: [number, number] | null = null;
@@ -122,8 +123,14 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		this.drawIfPossible().then();
 	}
 
+	@Input()
+	set markerEdit(enabled: boolean) {
+		this.canEditMarkers = enabled;
+		this.overlayDraw(false);
+	}
+
 	private async drawIfPossible() {
-		if (this.audioCtx != null && this.audioArray != null) {
+		if (this.audioCtx != null && this.audioArray != null && this.canvas != null) {
 			await this.draw();
 		}
 	}
@@ -143,7 +150,8 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 			if (e.touches.length === 1) {
 				this.lastTouchDist = 0;
 				this.lastTouchLeft = e.touches[0].clientX;
-				if (this.selectedMarkerCanvasOffsets != null) {
+				this.selectedMarkerHandling = null;
+				if (this.canEditMarkers && this.selectedMarkerCanvasOffsets != null) {
 					const canvasX = this.getCanvasX(this.lastTouchLeft);
 					const startX = this.selectedMarkerCanvasOffsets[0];
 					const endX = this.selectedMarkerCanvasOffsets[1];
@@ -151,8 +159,6 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 						this.selectedMarkerHandling = "start";
 					} else if (canvasX >= endX - 30 && canvasX <= endX) {
 						this.selectedMarkerHandling = "end";
-					} else {
-						this.selectedMarkerHandling = null;
 					}
 				}
 			} else if (e.touches.length === 2) {
@@ -470,6 +476,10 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		const can = this.overlayCanvas;
 		const ctx = this.overlayCtx;
 
+		if (can == null) {
+			return;
+		}
+
 		ctx.clearRect(0, 0, can.width, can.height);
 
 		if (this.audioBuffer == null) {
@@ -521,7 +531,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		}
 
 		// Selected marker handles
-		if (this.selectedMarkerCanvasOffsets != null) {
+		if (this.canEditMarkers && this.selectedMarkerCanvasOffsets != null) {
 			const startX = this.selectedMarkerCanvasOffsets[0];
 			const endX = this.selectedMarkerCanvasOffsets[1];
 			const midHeight = can.height / 2;

@@ -18,6 +18,7 @@ import {RecordingClassicPage} from "./page/recording/recording-classic.page";
 import {RecordsPage} from "./page/records/records.page";
 import {RecordPage} from "./page/records/record.page";
 import {MarkPage} from "./page/mark/mark.page";
+import {RespeakingPage} from "./page/respeak/respeak.page";
 
 
 @NgModule({
@@ -28,6 +29,7 @@ import {MarkPage} from "./page/mark/mark.page";
 		// Recording
 		RecordingInfoPage,
 		RecordingClassicPage,
+		RespeakingPage,
 		// Mark
 		MarkPage,
 		// Records

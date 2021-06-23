@@ -1,0 +1,18 @@
+<ion-header translucent>
+	<ion-toolbar>
+		<ion-buttons slot="start">
+			<ion-back-button [defaultHref]="record == null ? '/records' : '/record/' + record.dirName"></ion-back-button>
+		</ion-buttons>
+		<ion-title>Respeaking</ion-title>
+	</ion-toolbar>
+</ion-header>
+
+<ion-content fullscreen>
+
+	<app-waveform-editor #waveform
+						 [style.height]="'50%'"
+						 [style.width]="'100%'"
+						 [timeTicks]="true"
+						 [timeLabels]="true"></app-waveform-editor>
+
+</ion-content>

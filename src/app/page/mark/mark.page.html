@@ -1,7 +1,7 @@
 <ion-header translucent>
 	<ion-toolbar>
 		<ion-buttons slot="start">
-			<ion-back-button [defaultHref]="record == null ? '/mark-info' : '/record/' + record.dirName"></ion-back-button>
+			<ion-back-button [defaultHref]="record == null ? '/records' : '/record/' + record.dirName"></ion-back-button>
 		</ion-buttons>
 		<ion-title>Marking</ion-title>
 	</ion-toolbar>
@@ -13,16 +13,8 @@
 						 [style.height]="'50%'"
 						 [style.width]="'100%'"
 						 [timeTicks]="true"
-						 [timeLabels]="true"></app-waveform-editor>
-
-	<!--<div class="mark-page-control-buttons">
-		<ion-button fill="clear" (touchstart)="backwardStart()" (touchend)="actionStop()">
-			<ion-icon name="play-back-outline" size="large"></ion-icon>
-		</ion-button>
-		<ion-button fill="clear" (touchstart)="forwardStart()" (touchend)="actionStop()">
-			<ion-icon name="play-forward-outline" size="large"></ion-icon>
-		</ion-button>
-	</div>-->
+						 [timeLabels]="true"
+						 [markerEdit]="true"></app-waveform-editor>
 
 	<div class="mark-page-control-buttons">
 		<ion-button fill="clear" (click)="addMarker()">

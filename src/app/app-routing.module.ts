@@ -7,6 +7,7 @@ import {RecordingClassicPage} from "./page/recording/recording-classic.page";
 import {RecordsPage} from "./page/records/records.page";
 import {RecordPage} from "./page/records/record.page";
 import {MarkPage} from "./page/mark/mark.page";
+import {RespeakingPage} from "./page/respeak/respeak.page";
 
 
 const routes: Routes = [
@@ -26,6 +27,10 @@ const routes: Routes = [
 	{
 		path: "recording",
 		component: RecordingInfoPage
+	},
+	{
+		path: "respeaking/:recordDirName",
+		component: RespeakingPage
 	},
 	{
 		path: "records",
