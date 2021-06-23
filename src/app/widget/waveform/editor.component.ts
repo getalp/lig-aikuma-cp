@@ -70,7 +70,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 	private lastTouchLeft: number = 0;
 
 	// Sizes and zoom
-	private canvasZoom: number = 2;
+	private canvasZoom: number = 1;
 	private canvasOffset: number = 0;
 	private parentWidth: number = 0;
 	private parentHeight: number = 0;
@@ -82,6 +82,8 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 	ngOnInit() {
 		const AudioContextCls = window.AudioContext || (window as any).webkitAudioContext;
 		this.audioCtx = new AudioContextCls();
+		this.canvasZoom = 1;
+		this.canvasOffset = 0;
 	}
 
 	ngOnDestroy() {
