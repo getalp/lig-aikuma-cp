@@ -32,10 +32,16 @@
 		<ion-list-header>
 			<h5>Actions</h5>
 		</ion-list-header>
-		<ion-item button [color]="record.markersReady ? 'success' : 'warning'" [routerLink]="'/mark/' + record.dirName">
+		<ion-item button [color]="record.markersReady ? null : 'warning'" [routerLink]="'/mark/' + record.dirName">
 			<ion-icon slot="start" ios="bookmarks-outline" md="bookmarks"></ion-icon>
 			<ion-label>
 				<h2>Marking ({{ record.markersReady ? (record.markers.length + " marker" + (record.markers.length > 1 ? "s" : "")) : "missing" }})</h2>
+			</ion-label>
+		</ion-item>
+		<ion-item button [disabled]="!record.hasAnyMarker()">
+			<ion-icon slot="start" ios="volume-high-outline" md="volume-high"></ion-icon>
+			<ion-label>
+				<h2>Respeaking<span *ngIf="!record.hasAnyMarker()"> (need markers)</span></h2>
 			</ion-label>
 		</ion-item>
 		<ion-item button (click)="onDeleteClick()">

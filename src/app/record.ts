@@ -57,6 +57,10 @@ export class Record {
 		this.markers.push(new RecordMarker(start, end));
 	}
 
+	hasAnyMarker(): boolean {
+		return this.markersReady && this.markers.length !== 0;
+	}
+
 }
 
 
