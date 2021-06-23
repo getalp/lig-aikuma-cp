@@ -59,6 +59,10 @@
 	transition: background-color .2s, color .2s;
 }
 
+.waveform-editor-controls > .control.spaced {
+	margin-left: 20px;
+}
+
 .waveform-editor-controls > .control:active {
 	background-color: #1a1a1a;
 	color: #e3e3e3;

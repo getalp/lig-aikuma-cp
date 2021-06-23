@@ -59,7 +59,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 	private updateCursorHandle?: number;
 
 	// Markers
-	private canEditMarkers: boolean = false;
+	public canEditMarkers: boolean = false;
 	public markers: WaveformMarker[] = [];
 	public selectedMarkerIndex: number | null = null;
 	public selectedMarkerCanvasOffsets: [number, number] | null = null;
@@ -862,6 +862,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 			return false;
 		}
 
+		this.selectedMarkerIndex = this.markers.length;
 		this.markers.push(marker);
 		this.overlayDraw(false);
 		return true;
