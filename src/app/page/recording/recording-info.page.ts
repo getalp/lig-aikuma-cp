@@ -32,7 +32,7 @@ export class RecordingInfoPage {
 		// console.log("webkit get um: " + (<any>navigator).webkitGetUserMedia);
 		// console.log("moz get um: " + (<any>navigator).mozGetUserMedia);
 
-		console.log(`dirPath: ${record.dirPath}, basePath: ${record.basePath}, dirUri: ${record.dirUri}, baseUri: ${record.baseUri}`);
+		console.debug(`dirPath: ${record.dirPath}, basePath: ${record.basePath}, dirUri: ${record.dirUri}, baseUri: ${record.baseUri}`);
 
 		await this.router.navigate(["recording", "classic", record.dirName]);
 
