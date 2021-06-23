@@ -19,6 +19,13 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 	private static readonly MIN_MARKER_DURATION = 5;
 	private static readonly MIN_MARKER_SPACE = 1;
 
+	private static readonly MARKER_COLORS = [
+		"#387ffe",
+		"#5cd42c",
+		"#ed9111",
+		"#ed3211"
+	];
+
 	@ViewChild("container")
 	private containerRef: ElementRef;
 	@ViewChild("canvas")
@@ -481,7 +488,8 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		}
 
 		// Markers
-		ctx.fillStyle = "#387ffe";
+		const markerColors = WaveformEditorComponent.MARKER_COLORS;
+		// ctx.fillStyle = "#387ffe";
 		ctx.globalAlpha = 0.1;
 		this.selectedMarkerCanvasOffsets = null;
 		for (let i = 0, j = this.markers.length; i < j; ++i) {
@@ -489,6 +497,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 			const selected = (this.selectedMarkerIndex === i);
 			const x = marker.start * pixelsPerSecond - this.canvasOffset;
 			const width = (marker.end - marker.start) * pixelsPerSecond;
+			ctx.fillStyle = markerColors[i % markerColors.length];
 			if (selected) {
 				ctx.globalAlpha = 0.2;
 				this.selectedMarkerCanvasOffsets = [x, x + width];
