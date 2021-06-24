@@ -9,9 +9,9 @@ export class Record {
 
 	public dirName: string = null;
 	public dirPath: string = null;
-	public basePath: string = null;
+	//public basePath: string = null;
 	public dirUri: string = null;
-	public baseUri: string = null;
+	//public baseUri: string = null;
 
 	public hasAudio: boolean = false;
 
@@ -25,10 +25,6 @@ export class Record {
 		public type: RecordType
 	) { }
 
-	static newRaw(speaker: Speaker, language: string): Record {
-		return new Record(null, speaker, language, RecordType.Raw);
-	}
-
 	isRoot(): boolean {
 		return this.parent == null;
 	}
@@ -37,17 +33,34 @@ export class Record {
 		return !this.isRoot();
 	}
 
-	getMetaPath(): string {
-		return this.basePath + ".json";
+	wasPathLoaded(): boolean {
+		return this.dirName != null;
 	}
 
-	getAacPath(): string {
+	getMetaPath(): string {
+		// return this.basePath + ".json";
+		return Record.getMetaPathFromDirPath(this.dirPath);
+	}
+
+	getAudioPath(): string {
+		return this.dirPath + "/audio.aac";
+	}
+
+	getAudioUri(): string {
+		return this.dirUri + "/audio.aac";
+	}
+
+	getTempAudioPath(id: number): string {
+		return this.dirUri + "/audio-tmp" + id + ".aac";
+	}
+
+	/*getAacPath(): string {
 		return this.basePath + ".aac";
 	}
 
 	getAacUri(): string {
 		return this.baseUri + ".aac";
-	}
+	}*/
 
 	clearMarkers() {
 		this.markers.splice(0, this.markers.length);
@@ -59,6 +72,10 @@ export class Record {
 
 	hasAnyMarker(): boolean {
 		return this.markersReady && this.markers.length !== 0;
+	}
+
+	static getMetaPathFromDirPath(dirPath: string): string {
+		return dirPath + "/meta.json";
 	}
 
 }
@@ -81,6 +98,7 @@ export class RecordMarker {
 
 
 export interface RecordSerialized {
+	"parent": string | null,
 	"speaker": SpeakerSerialized,
 	"language": string,
 	"type": string,
@@ -97,6 +115,7 @@ export interface RecordSerialized {
 
 export function serializeRecord(record: Record): RecordSerialized {
 	return {
+		"parent": (record.parent == null) ? null : record.parent.dirName,
 		"speaker": serializeSpeaker(record.speaker),
 		"language": record.language,
 		"type": record.type,
@@ -111,9 +130,9 @@ export function serializeRecord(record: Record): RecordSerialized {
 }
 
 
-export function deserializeRecord(parent: Record, raw: RecordSerialized): Record {
+export function deserializeRecord(/*parent: Record, */raw: RecordSerialized): Record {
 	const speaker = deserializeSpeaker(null, raw["speaker"]);
-	const record = new Record(parent, speaker, raw["language"], <RecordType>raw["type"]);
+	const record = new Record(/*parent, */ null, speaker, raw["language"], <RecordType>raw["type"]);
 	record.date = new Date(raw["date"]);
 	record.notes = raw["notes"];
 	record.duration = raw["duration"];

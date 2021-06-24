@@ -12,8 +12,8 @@ export class HomePage {
 		{
 			title: "Recording",
 			children: [
-				{title: "Recording", icon: "mic", router: {link: "/recording", data: {mode: "classic"}}},
-				{title: "Elicitation", icon: "images", router: {link: "/recording", data: {mode: "elicitation"}}},
+				{title: "Recording", icon: "mic", router: {link: "/recording-info/classic"}},
+				{title: "Elicitation", icon: "images", router: {link: "/recording-info/elicitation"}},
 			]
 		},
 		{

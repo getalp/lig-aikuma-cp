@@ -1,11 +1,11 @@
 import {Injectable} from '@angular/core';
 
-import {Filesystem, ReaddirResult, StatResult, Encoding} from '@capacitor/filesystem'
+import {Encoding, Filesystem, ReaddirResult, StatResult} from '@capacitor/filesystem'
 import {LocalNotifications} from "@capacitor/local-notifications";
 import {AikumaNative} from "../native";
 
-import {computePath, getCommonOptions} from "../files";
-import {deserializeRecord, Record, serializeRecord} from "../record";
+import {computePath, getCommonOptions, ROOT} from "../files";
+import {deserializeRecord, Record, RecordSerialized, RecordType, serializeRecord} from "../record";
 import {formatTwoDigit} from "../utils";
 
 
@@ -17,7 +17,6 @@ export class RecordService {
 	private static readonly RECORDS_DIR = "records";
 
 	private records: { [key: string]: Record } = null;
-	private recorder: BaseRecorder | null = null;
 
 	constructor() {
 
@@ -52,30 +51,47 @@ export class RecordService {
 			return;
 		}
 
+		const recordsWithParent: [Record, string][] = [];
+
 		for (let recordDir of dirsRes.files) {
 
 			try {
 
-				const basePath = computePath([RecordService.RECORDS_DIR, recordDir, "raw"]);
+				const dirPath = computePath([RecordService.RECORDS_DIR, recordDir]);
 
-				// Ensure that the audio is present before decoding metadata.
-				// FIXME: No longer checking for audio file.
-				// await Filesystem.stat(getCommonOptions(basePath + ".wav"));
+				const metaPath = Record.getMetaPathFromDirPath(dirPath);
+				// const basePath = computePath([RecordService.RECORDS_DIR, recordDir, "raw"]);
+
+				// Legacy compatibility loading
+				try {
+					const legacyMetaPath = dirPath + "/raw.json";
+					await Filesystem.rename({from: legacyMetaPath, to: metaPath, directory: ROOT});
+				} catch (ignored) {}
+				try {
+					const legacyAudioPath = dirPath + "/raw.aac";
+					const newAudioPath = dirPath + "/audio.aac";
+					await Filesystem.rename({from: legacyAudioPath, to: newAudioPath, directory: ROOT});
+				} catch (ignored) {}
 
 				const recordRes = await Filesystem.readFile({
-					...getCommonOptions(basePath + ".json"),
+					...getCommonOptions(metaPath /*basePath + ".json"*/),
 					encoding: Encoding.UTF8
 				});
 
-				const record = deserializeRecord(null, JSON.parse(recordRes.data));
+				const recordSerialized = <RecordSerialized>JSON.parse(recordRes.data);
+				const record = deserializeRecord(recordSerialized);
 				record.dirName = recordDir;
 				record.dirPath = computePath([RecordService.RECORDS_DIR, recordDir]);
-				record.basePath = basePath;
+				//record.basePath = basePath;
 				record.dirUri = dirsStat.uri + "/" + recordDir;
-				record.baseUri = record.dirUri + "/raw";
+				//record.baseUri = record.dirUri + "/raw";
+
+				if (recordSerialized.parent != null) {
+					recordsWithParent.push([record, recordSerialized.parent]);
+				}
 
 				try {
-					await Filesystem.stat(getCommonOptions(record.getAacPath()));
+					await Filesystem.stat(getCommonOptions(record.getAudioPath() /*record.getAacPath()*/));
 					record.hasAudio = true;
 				} catch (ignored) {}
 
@@ -87,6 +103,10 @@ export class RecordService {
 
 		}
 
+		for (let [record, parentRecordDir] of recordsWithParent) {
+			record.parent = this.records[parentRecordDir] ?? null;
+		}
+
 	}
 
 	async ensureLoaded(): Promise<{ [key: string]: Record }> {
@@ -96,11 +116,7 @@ export class RecordService {
 		return this.records;
 	}
 
-	async newRawRecord(record: Record) {
-
-		if (!record.isRoot()) {
-			throw "You can only use this function for raw records, without parent.";
-		}
+	async initRecord(record: Record) {
 
 		await this.ensureLoaded();
 
@@ -128,19 +144,13 @@ export class RecordService {
 
 				record.dirName = dir;
 				record.dirPath = dirPath;
-				record.basePath = computePath([RecordService.RECORDS_DIR, dir, "raw"]);
+				//record.basePath = computePath([RecordService.RECORDS_DIR, dir, "raw"]);
 				record.dirUri = res.uri;
-				record.baseUri = record.dirUri + "/raw";
+				//record.baseUri = record.dirUri + "/raw";
 
-				await Filesystem.writeFile({
-					...getCommonOptions(record.getMetaPath()),
-					encoding: Encoding.UTF8,
-					data: JSON.stringify(serializeRecord(record)),
-					recursive: true
-				});
+				await this.saveRecord(record);
 
 				this.records[dir] = record;
-
 				return;
 
 			}
@@ -153,10 +163,10 @@ export class RecordService {
 
 	async deleteRecord(record: Record): Promise<void> {
 
-		if (!record.isRoot()) {
+		/*if (!record.isRoot()) {
 			throw "You must use the raw record without parent to delete the directory.";
 			// TODO: Add support for removing "Derived records".
-		}
+		}*/
 
 		await Filesystem.rmdir({
 			...getCommonOptions(record.dirPath),
@@ -169,8 +179,8 @@ export class RecordService {
 
 	async saveRecord(record: Record): Promise<void> {
 
-		if (record.basePath == null) {
-			throw "The record should have a base path";
+		if (!record.wasPathLoaded()) {
+			throw "The record was not loaded from file system.";
 		}
 
 		await Filesystem.writeFile({
@@ -190,32 +200,27 @@ export class RecordService {
 		}
 	}
 
-	/*private beginRecord<T extends BaseRecorder>(factory: () => T): T {
-		if (this.recorder != null) {
-			throw "Another record is already started, no recorder can be built.";
-		}
-		this.recorder = factory();
-		return <T>this.recorder;
-	}
-
-	private clearRecord() {
-		this.recorder = null;
-	}*/
-
 	async beginRawRecord(record: Record): Promise<RawRecorder> {
-		if (record.baseUri == null) {
-			throw "The record must be linked and initialized by the RecordService before beginning record.";
+		if (!record.wasPathLoaded()) {
+			throw "The record was not loaded from file system.";
+		} else if (record.type !== RecordType.Raw) {
+			throw "The record is not raw.";
 		} else {
-			// return this.beginRecord(() => new RawRecorder(this, record));
 			return new RawRecorder(this, record);
 		}
 	}
 
-	/*async stopCurrentRecord() {
-		if (this.recorder != null) {
-			await this.recorder.stop();
+	async beginRespeakingRecord(record: Record): Promise<RespeakingRecorder> {
+		if (!record.wasPathLoaded()) {
+			throw "The record was not loaded from file system.";
+		} else if (record.type !== RecordType.Respeaking) {
+			throw "The record is not a respeaking.";
+		} else if (!record.hasAnyMarker()) {
+			throw "The record is a respeaking but has no marker for it.";
+		} else {
+			return new RespeakingRecorder(this, record);
 		}
-	}*/
+	}
 
 	static getRecordDirName(record: Record): string {
 		const date = record.date;
@@ -233,12 +238,7 @@ export class RecordService {
 }
 
 
-interface BaseRecorder {
-	stop(): Promise<void>;
-}
-
-
-export class RawRecorder implements BaseRecorder {
+export class RawRecorder {
 
 	private currentPath: string = null;
 	private paused: boolean = true;
@@ -263,7 +263,8 @@ export class RawRecorder implements BaseRecorder {
 				this.paused = false;
 			});
 		} else {
-			const path = this.record.getAacUri();
+			// const path = this.record.getAacUri();
+			const path = this.record.getAudioPath();
 			return AikumaNative.startRecording({
 				path: path // URI are allowed and automatically converted to path if beginning with file://
 			}).then(() => {
@@ -345,6 +346,87 @@ export class RawRecorder implements BaseRecorder {
 			return (await AikumaNative.getRecordDuration()).duration;
 		} else {
 			return 0;
+		}
+	}
+
+}
+
+
+export class RespeakingRecorder {
+
+	private currentMarkerIndex: number | null = null;
+	private paused: boolean = true;
+
+	constructor(
+		private service: RecordService,
+		private record: Record
+	) { }
+
+	/**
+	 * If started, return the index of the marker which is being respeaked.
+	 */
+	isStarted(): number | null {
+		return this.currentMarkerIndex;
+	}
+
+	isPaused(): boolean {
+		return this.currentMarkerIndex == null || this.paused;
+	}
+
+	private checkMarkerIndex(index: number) {
+		if (index < 0 || index >= this.record.markers.length) {
+			throw "Invalid marker index.";
+		}
+	}
+
+	async resumeRecording(markerIndex: number) {
+
+		if (this.currentMarkerIndex === markerIndex) {
+			await AikumaNative.resumeRecording();
+			this.paused = false;
+		} else {
+
+			this.checkMarkerIndex(markerIndex);
+
+			if (this.currentMarkerIndex != null) {
+				await this.stopAndSaveRecording(this.currentMarkerIndex);
+			}
+
+			await AikumaNative.startRecording({
+				path: this.record.getTempAudioPath(markerIndex)
+			});
+			this.currentMarkerIndex = markerIndex;
+			this.paused = false;
+
+		}
+
+	}
+
+	async pauseRecording(markerIndex: number) {
+		if (this.currentMarkerIndex === markerIndex) {
+			await AikumaNative.pauseRecording();
+			this.paused = true;
+		} else {
+			throw "Not recording";
+		}
+	}
+
+	async toggleRecording(markerIndex: number) {
+		if (this.currentMarkerIndex !== markerIndex || this.paused) {
+			await this.resumeRecording(markerIndex);
+		} else {
+			await this.pauseRecording(markerIndex);
+		}
+	}
+
+	async stopAndSaveRecording(markerIndex: number) {
+		if (this.currentMarkerIndex === markerIndex) {
+			this.paused = true;
+			this.currentMarkerIndex = null;
+			const info = await AikumaNative.stopRecording();
+			console.log("Saved marker record for " + markerIndex + " (path: " + info.path + ", duration: " + info.duration.toFixed(2) + ")");
+		} else {
+			throw "Not recording.";
 		}
 	}
 

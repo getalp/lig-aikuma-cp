@@ -29,7 +29,7 @@ export class MarkPage implements AfterViewInit {
 		this.record = await this.recordService.getRecord(recordDirName);
 
 		// Loading the waveform from the code and not from attribute to allow awaiting.
-		await this.waveformEditorRef.load(this.record.getAacUri());
+		await this.waveformEditorRef.load(this.record.getAudioUri() /*this.record.getAacUri()*/);
 		this.waveformEditorRef.addMarkersUnsafe(this.record.markers.map(recordMarker => {
 			return {start: recordMarker.start, end: recordMarker.end};
 		}));

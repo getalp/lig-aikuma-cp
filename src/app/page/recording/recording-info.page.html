@@ -3,7 +3,7 @@
 		<ion-buttons slot="start">
 			<ion-back-button defaultHref="/"></ion-back-button>
 		</ion-buttons>
-		<ion-title>Recording</ion-title>
+		<ion-title>{{ recordMode == null ? "Recording" : recordModes[recordMode][1] }}</ion-title>
 	</ion-toolbar>
 </ion-header>
 

@@ -11,7 +11,7 @@
 
 	<app-record-card [record]="record"></app-record-card>
 
-	<app-waveform-editor [uri]="record.getAacUri()"
+	<app-waveform-editor [uri]="record.getAudioUri()"
 						 [style.margin]="'20px 0 0 0'"
 						 [style.height.px]="80"
 						 [style.width]="'100%'"
@@ -38,7 +38,7 @@
 				<h2>Marking ({{ record.markersReady ? (record.markers.length + " marker" + (record.markers.length > 1 ? "s" : "")) : "missing" }})</h2>
 			</ion-label>
 		</ion-item>
-		<ion-item button [disabled]="!record.hasAnyMarker()" [routerLink]="'/respeaking/' + record.dirName">
+		<ion-item button [disabled]="!record.hasAnyMarker()" [routerLink]="'/recording-info/respeaking/' + record.dirName">
 			<ion-icon slot="start" ios="volume-high-outline" md="volume-high"></ion-icon>
 			<ion-label>
 				<h2>Respeaking<span *ngIf="!record.hasAnyMarker()"> (need markers)</span></h2>
