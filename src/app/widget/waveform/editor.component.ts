@@ -1,4 +1,7 @@
-import {Component, Input, ElementRef, OnInit, OnDestroy, AfterViewInit, ViewChild} from "@angular/core";
+import {
+	Component, Input, ElementRef, OnInit, OnDestroy,
+	AfterViewInit, ViewChild, Output, EventEmitter
+} from "@angular/core";
 
 import {Filesystem} from "@capacitor/filesystem";
 
@@ -32,6 +35,9 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 	private canvasRef: ElementRef;
 	@ViewChild("overlayCanvas")
 	private overlayCanvasRef: ElementRef;
+
+	@Output()
+	public markerSelected = new EventEmitter<[number, WaveformMarker]>();
 
 	private canvas: HTMLCanvasElement;
 	private ctx: CanvasRenderingContext2D;
@@ -274,18 +280,6 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 			const realWidth = this.canvas.width * this.canvasZoom;
 			const touchRatio = (this.canvasOffset + this.getCanvasX(e.clientX)) / realWidth;
 			const touchTime = touchRatio * this.audioBuffer.duration;
-			if (this.selectedMarkerIndex != null) {
-				const selectedMarker = this.markers[this.selectedMarkerIndex];
-				if (touchTime < selectedMarker.start || touchTime > selectedMarker.end) {
-					this.selectedMarkerIndex = null;
-				}
-			}
-			if (this.selectedMarkerIndex == null) {
-				const touchMarkerIndex = this.getMarkerIndexAt(touchTime);
-				if (touchMarkerIndex != null) {
-					this.selectedMarkerIndex = touchMarkerIndex;
-				}
-			}
 			this.setStartTime(touchTime);
 		}
 	}
@@ -663,9 +657,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		this.waveformData = null; // Reset the waveform data to force computation.
 		this.audioBuffer = null;
 		this.markers.splice(0, this.markers.length);
-		this.selectedMarkerIndex = null;
-		this.selectedMarkerCanvasOffsets = null;
-		this.selectedMarkerHandling = null;
+		this.setSelectedMarkerIndex(null);
 		await this.drawIfPossible();
 		this.overlayDraw(false);
 		this.audioLoading = false;
@@ -772,6 +764,25 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 			time = this.audioBuffer.duration;
 		}
 
+		let selectedMarkerIndex = this.selectedMarkerIndex;
+		if (selectedMarkerIndex != null) {
+			const selectedMarker = this.markers[selectedMarkerIndex];
+			if (time < selectedMarker.start || time > selectedMarker.end) {
+				selectedMarkerIndex = null;
+			}
+		}
+
+		if (selectedMarkerIndex == null) {
+			const touchMarkerIndex = this.getMarkerIndexAt(time);
+			if (touchMarkerIndex != null) {
+				selectedMarkerIndex = touchMarkerIndex;
+			}
+		}
+
+		if (selectedMarkerIndex !== this.selectedMarkerIndex) {
+			this.setSelectedMarkerIndex(selectedMarkerIndex);
+		}
+
 		this.startRefTime = time;
 		this.overlayDraw(true);
 
@@ -795,6 +806,20 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 			}
 		}
 		return null;
+	}
+
+	private setSelectedMarkerIndex(index: number | null) {
+		if (index < 0 || index >= this.markers.length) {
+			index = null;
+		}
+		this.selectedMarkerIndex = index;
+		if (index == null) {
+			this.selectedMarkerCanvasOffsets = null;
+			this.selectedMarkerHandling = null;
+			this.markerSelected.emit(null);
+		} else {
+			this.markerSelected.emit([index, this.markers[index]]);
+		}
 	}
 
 	addMarker(at: number): boolean {
@@ -862,8 +887,8 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 			return false;
 		}
 
-		this.selectedMarkerIndex = this.markers.length;
 		this.markers.push(marker);
+		this.setSelectedMarkerIndex(this.markers.length - 1);
 		this.overlayDraw(false);
 		return true;
 
@@ -885,9 +910,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 	popSelectedMarker(): WaveformMarker | null {
 		if (this.selectedMarkerIndex != null) {
 			const marker = this.markers.splice(this.selectedMarkerIndex, 1)[0];
-			this.selectedMarkerIndex = null;
-			this.selectedMarkerCanvasOffsets = null;
-			this.selectedMarkerHandling = null;
+			this.setSelectedMarkerIndex(null);
 			this.overlayDraw(false);
 			return marker;
 		}

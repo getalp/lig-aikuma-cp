@@ -13,6 +13,7 @@
 						 [style.height]="'50%'"
 						 [style.width]="'100%'"
 						 [timeTicks]="true"
-						 [timeLabels]="true"></app-waveform-editor>
+						 [timeLabels]="true"
+						 (markerSelected)="onWaveformMarkerSelected($event)"></app-waveform-editor>
 
 </ion-content>
