@@ -52,8 +52,8 @@ export class Record {
 		return this.dirUri + "/audio.aac";
 	}
 
-	getTempAudioPath(id: number): string {
-		return this.dirPath + "/audio-tmp" + id + ".aac";
+	getTempAudioUri(id: number): string {
+		return this.dirUri + "/audio-tmp" + id + ".aac";
 	}
 
 	/*getAacPath(): string {
@@ -68,10 +68,10 @@ export class Record {
 		this.markers.splice(0, this.markers.length);
 	}
 
-	/*copyMarkersTo(other: Record) {
+	copyMarkersTo(other: Record) {
 		other.clearMarkers();
 		other.markers.push(...this.markers);
-	}*/
+	}
 
 	addMarker(start: number, end: number) {
 		this.markers.push(new RecordMarker(start, end));

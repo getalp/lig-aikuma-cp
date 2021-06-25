@@ -269,8 +269,7 @@ export class RawRecorder {
 				this.paused = false;
 			});
 		} else {
-			// const path = this.record.getAacUri();
-			const path = this.record.getAudioPath();
+			const path = this.record.getAudioUri();
 			return AikumaNative.startRecording({
 				path: path // URI are allowed and automatically converted to path if beginning with file://
 			}).then(() => {
@@ -361,12 +360,17 @@ export class RawRecorder {
 export class RespeakingRecorder {
 
 	private currentMarkerIndex: number | null = null;
+	private recordingDurations: number[] = [];
 	private paused: boolean = true;
 
 	constructor(
 		private service: RecordService,
 		private record: Record
-	) { }
+	) {
+		for (let i = 0; i < this.record.markers.length; ++i) {
+			this.recordingDurations.push(0);
+		}
+	}
 
 	/**
 	 * If started, return the index of the marker which is being respeaked.
@@ -377,6 +381,10 @@ export class RespeakingRecorder {
 
 	isPaused(): boolean {
 		return this.currentMarkerIndex == null || this.paused;
+	}
+
+	getRecordingDuration(markerIndex: number): number {
+		return this.recordingDurations[markerIndex];
 	}
 
 	private checkMarkerIndex(index: number) {
@@ -395,11 +403,11 @@ export class RespeakingRecorder {
 			this.checkMarkerIndex(markerIndex);
 
 			if (this.currentMarkerIndex != null) {
-				await this.stopAndSaveRecording(this.currentMarkerIndex);
+				await this.stopRecording(this.currentMarkerIndex);
 			}
 
 			await AikumaNative.startRecording({
-				path: this.record.getTempAudioPath(markerIndex)
+				path: this.record.getTempAudioUri(markerIndex)
 			});
 			this.currentMarkerIndex = markerIndex;
 			this.paused = false;
@@ -425,15 +433,20 @@ export class RespeakingRecorder {
 		}
 	}
 
-	async stopAndSaveRecording(markerIndex: number) {
+	async stopRecording(markerIndex: number) {
 		if (this.currentMarkerIndex === markerIndex) {
 			this.paused = true;
 			this.currentMarkerIndex = null;
 			const info = await AikumaNative.stopRecording();
+			this.recordingDurations[markerIndex] = info.duration;
 			console.log("Saved marker record for " + markerIndex + " (path: " + info.path + ", duration: " + info.duration.toFixed(2) + ")");
 		} else {
 			throw "Not recording.";
 		}
+	}
+
+	async saveRespeaking() {
+
 	}
 
 }

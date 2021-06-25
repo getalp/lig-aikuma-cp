@@ -1,7 +1,7 @@
 import {AfterViewInit, Component, OnDestroy, ViewChild} from '@angular/core';
-import {Record} from "../../record";
+import {Record, RecordType} from "../../record";
 import {ActivatedRoute} from "@angular/router";
-import {RecordService} from "../../service/record.service";
+import {RecordService, RespeakingRecorder} from "../../service/record.service";
 import {WaveformEditorComponent, WaveformMarker} from "../../widget/waveform/editor.component";
 import {Toast} from "@capacitor/toast";
 
@@ -19,6 +19,13 @@ export class RespeakingPage implements AfterViewInit, OnDestroy {
 	public record: Record;
 	public parentRecord: Record;
 
+	public selectedMarkerIndex: number | null = null;
+	public selectedMarker: WaveformMarker | null = null;
+	public selectedMarkerNewDuration: number = 0;
+	public paused: boolean = true;
+
+	private respeakingRecorder: RespeakingRecorder;
+
 	constructor(
 		private route: ActivatedRoute,
 		private recordService: RecordService
@@ -29,17 +36,21 @@ export class RespeakingPage implements AfterViewInit, OnDestroy {
 		const recordDirName = this.route.snapshot.paramMap.get("recordDirName");
 		this.record = await this.recordService.getRecord(recordDirName);
 
-		if (this.record.parent == null) {
-			console.warn("The respeaking page need a record with a parent in order to copy markers.")
+		if (this.record.parent == null || !this.record.parent.markersReady || this.record.type !== RecordType.Respeaking) {
+			console.warn("The respeaking page need a respeaking record with a parent in order to copy markers.")
 			await Toast.show({text: "Failed to load."});
 			this.record = null;
 			return;
 		}
 
 		this.parentRecord = this.record.parent;
+		this.parentRecord.copyMarkersTo(this.record);
+		this.record.markersReady = true;
 
 		// Loading the waveform from the code and not from attribute to allow awaiting.
 		await this.waveformEditorRef.loadRecord(this.parentRecord, true);
+
+		this.respeakingRecorder = await this.recordService.beginRespeakingRecord(this.record);
 
 	}
 
@@ -53,11 +64,20 @@ export class RespeakingPage implements AfterViewInit, OnDestroy {
 		}
 	}
 
-	async onWaveformMarkerSelected(event: [number, WaveformMarker]) {
-		if (event == null) {
-			await Toast.show({text: "Unselected marker"});
-		} else {
-			await Toast.show({text: "Selected " + event[0] + " (" + event[1].start.toFixed(1) + " - " + event[1].end.toFixed(1) + ")"});
+	async onWaveformMarkerSelected(marker: [number, WaveformMarker]) {
+		if (this.selectedMarkerIndex != null && this.respeakingRecorder.isStarted() === this.selectedMarkerIndex) {
+			await this.respeakingRecorder.stopRecording(this.selectedMarkerIndex);
+		}
+		this.selectedMarkerIndex = (marker == null) ? null : marker[0];
+		this.selectedMarker = (marker == null) ? null : marker[1];
+		this.selectedMarkerNewDuration = (marker == null) ? 0 : this.respeakingRecorder.getRecordingDuration(marker[0]);
+		this.paused = true;
+	}
+
+	async onPauseOrResumeClick() {
+		if (this.selectedMarkerIndex != null) {
+			await this.respeakingRecorder.toggleRecording(this.selectedMarkerIndex);
+			this.paused = this.respeakingRecorder.isPaused();
 		}
 	}
 

@@ -16,4 +16,16 @@
 						 [timeLabels]="true"
 						 (markerSelected)="onWaveformMarkerSelected($event)"></app-waveform-editor>
 
+	<div>Selected marker: {{ selectedMarker == null ? "n/a" : ("n°" + selectedMarkerIndex + ", from " + selectedMarker.start.toFixed(1) + " to " + selectedMarker.end.toFixed(1)) }}</div>
+	<div *ngIf="selectedMarker != null">New duration: {{ this.selectedMarkerNewDuration === 0 ? "n/a" : this.selectedMarkerNewDuration.toFixed(1) }}</div>
+
+	<ion-button expand="block" *ngIf="this.selectedMarkerNewDuration !== 0" color="warning" [style.height.px]="100">
+		<ion-icon *ngIf="paused" name="close"></ion-icon>
+	</ion-button>
+
+	<ion-button *ngIf="selectedMarker != null && this.selectedMarkerNewDuration === 0" expand="block" color="light" (click)="onPauseOrResumeClick()" [style.height.px]="100">
+		<ion-icon *ngIf="paused" name="square"></ion-icon>
+		<ion-icon *ngIf="!paused" name="pause"></ion-icon>
+	</ion-button>
+
 </ion-content>
