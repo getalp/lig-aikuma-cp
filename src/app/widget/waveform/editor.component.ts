@@ -8,6 +8,7 @@ import {Filesystem} from "@capacitor/filesystem";
 import {ResizeSensor} from "css-element-queries";
 import WaveformData from "waveform-data";
 import {base64ToBuffer, formatDuration} from "../../utils";
+import {Record} from "../../record";
 
 
 @Component({
@@ -38,6 +39,9 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 
 	@Output()
 	public markerSelected = new EventEmitter<[number, WaveformMarker]>();
+
+	@Input()
+	public moreControls: (Control | null)[] = [];  // null for spacer
 
 	private canvas: HTMLCanvasElement;
 	private ctx: CanvasRenderingContext2D;
@@ -650,6 +654,13 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		}
 	}
 
+	async loadRecord(record: Record, loadMarkers: boolean = false) {
+		await this.load(record.getAudioUri());
+		if (loadMarkers) {
+			this.addMarkersUnsafeFromRecord(record);
+		}
+	}
+
 	async loadAudioArray(buf: ArrayBuffer) {
 		await this.stop();
 		this.audioLoading = true;
@@ -903,6 +914,12 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		this.overlayDraw(false);
 	}
 
+	addMarkersUnsafeFromRecord(record: Record) {
+		this.addMarkersUnsafe(record.markers.map(recordMarker => {
+			return {start: recordMarker.start, end: recordMarker.end};
+		}));
+	}
+
 	getSelectedMarker(): WaveformMarker | null {
 		return (this.selectedMarkerIndex == null) ? null : this.markers[this.selectedMarkerIndex];
 	}
@@ -927,4 +944,9 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 export interface WaveformMarker {
 	start: number,
 	end: number,
+}
+
+interface Control {
+	icon: string;
+	click?: ((this: GlobalEventHandlers, ev: MouseEvent) => any) | null;
 }

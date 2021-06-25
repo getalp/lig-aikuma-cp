@@ -67,6 +67,7 @@ export class RecordService {
 					const legacyMetaPath = dirPath + "/raw.json";
 					await Filesystem.rename({from: legacyMetaPath, to: metaPath, directory: ROOT});
 				} catch (ignored) {}
+
 				try {
 					const legacyAudioPath = dirPath + "/raw.aac";
 					const newAudioPath = dirPath + "/audio.aac";
@@ -105,6 +106,7 @@ export class RecordService {
 
 		for (let [record, parentRecordDir] of recordsWithParent) {
 			record.parent = this.records[parentRecordDir] ?? null;
+			record.parent.children.push(record);
 		}
 
 	}
@@ -147,6 +149,10 @@ export class RecordService {
 				//record.basePath = computePath([RecordService.RECORDS_DIR, dir, "raw"]);
 				record.dirUri = res.uri;
 				//record.baseUri = record.dirUri + "/raw";
+
+				if (record.parent != null) {
+					record.parent.children.push(record);
+				}
 
 				await this.saveRecord(record);
 

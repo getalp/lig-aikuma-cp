@@ -18,7 +18,14 @@
 	<div class="control" (click)="pause()" *ngIf="isNotPaused()"><ion-icon name="pause"></ion-icon></div>
 	<div class="control" (click)="stop()" *ngIf="isPlaying()"><ion-icon name="stop"></ion-icon></div>
 
-	<div class="control spaced" (click)="addMarkerAtStartTime()" *ngIf="canEditMarkers && selectedMarkerIndex == null"><ion-icon name="bookmark"></ion-icon></div>
-	<div class="control spaced" (click)="popSelectedMarker()" *ngIf="canEditMarkers && selectedMarkerIndex != null"><ion-icon name="bookmark-outline"></ion-icon></div>
+	<div class="spacer" *ngIf="canEditMarkers"></div>
+	<div class="control" (click)="addMarkerAtStartTime()" *ngIf="canEditMarkers && selectedMarkerIndex == null"><ion-icon name="bookmark"></ion-icon></div>
+	<div class="control" (click)="popSelectedMarker()" *ngIf="canEditMarkers && selectedMarkerIndex != null"><ion-icon name="bookmark-outline"></ion-icon></div>
 
+</div>
+
+<div class="waveform-editor-controls right">
+	<div *ngFor="let control of moreControls" class="{{ control == null ? 'spacer' : 'control' }}" (click)="control.click($event)">
+		<ion-icon *ngIf="control != null" name="{{ control.icon }}"></ion-icon>
+	</div>
 </div>

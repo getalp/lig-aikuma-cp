@@ -18,6 +18,8 @@ export class Record {
 	public markersReady: boolean = false;
 	public markers: RecordMarker[] = [];
 
+	public children: Record[] = [];
+
 	constructor(
 		public parent: Record,
 		public speaker: Speaker,
@@ -51,7 +53,7 @@ export class Record {
 	}
 
 	getTempAudioPath(id: number): string {
-		return this.dirUri + "/audio-tmp" + id + ".aac";
+		return this.dirPath + "/audio-tmp" + id + ".aac";
 	}
 
 	/*getAacPath(): string {
@@ -65,6 +67,11 @@ export class Record {
 	clearMarkers() {
 		this.markers.splice(0, this.markers.length);
 	}
+
+	/*copyMarkersTo(other: Record) {
+		other.clearMarkers();
+		other.markers.push(...this.markers);
+	}*/
 
 	addMarker(start: number, end: number) {
 		this.markers.push(new RecordMarker(start, end));

@@ -84,6 +84,8 @@ export class RecordingClassicPage implements OnInit, OnDestroy {
 			await this.recordService.deleteRecord(this.record);
 		}
 
+		this.record = null;
+
 	}
 
 	// Public API //
