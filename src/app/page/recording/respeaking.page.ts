@@ -192,12 +192,11 @@ export class RespeakingPage implements AfterViewInit, OnDestroy {
 		const tempRecord = (this.selectedMarkerIndex == null) ? null : this.respeakingRecorder.getTempRecord(this.selectedMarkerIndex);
 		if (tempRecord == null) {
 			this.selectedMarkerAlreadyRecorded = false;
-			// await this.previewWaveformEditorRef.unload();
+			await this.previewWaveformEditorRef.unload();
 		} else {
 			this.selectedMarkerAlreadyRecorded = true;
 			await this.previewWaveformEditorRef.load(tempRecord.uri);
 		}
-		// this.changeDetector.detectChanges();
 	}
 
 }
