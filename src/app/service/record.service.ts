@@ -271,7 +271,8 @@ export class RawRecorder {
 		} else {
 			const path = this.record.getAudioUri();
 			return AikumaNative.startRecording({
-				path: path // URI are allowed and automatically converted to path if beginning with file://
+				path: path, // URI are allowed and automatically converted to path if beginning with file://
+				cancelLast: true
 			}).then(() => {
 				this.currentPath = path;
 				this.paused = false;
@@ -360,7 +361,7 @@ export class RawRecorder {
 export class RespeakingRecorder {
 
 	private currentMarkerIndex: number | null = null;
-	private recordingDurations: number[] = [];
+	private tempRecords: RespeakingTempRecord[] = [];
 	private paused: boolean = true;
 
 	constructor(
@@ -368,7 +369,7 @@ export class RespeakingRecorder {
 		private record: Record
 	) {
 		for (let i = 0; i < this.record.markers.length; ++i) {
-			this.recordingDurations.push(0);
+			this.tempRecords.push(null);
 		}
 	}
 
@@ -383,8 +384,8 @@ export class RespeakingRecorder {
 		return this.currentMarkerIndex == null || this.paused;
 	}
 
-	getRecordingDuration(markerIndex: number): number {
-		return this.recordingDurations[markerIndex];
+	getTempRecord(markerIndex: number): RespeakingTempRecord {
+		return this.tempRecords[markerIndex];
 	}
 
 	private checkMarkerIndex(index: number) {
@@ -403,12 +404,21 @@ export class RespeakingRecorder {
 			this.checkMarkerIndex(markerIndex);
 
 			if (this.currentMarkerIndex != null) {
-				await this.stopRecording(this.currentMarkerIndex);
+				// await this.stopRecording(this.currentMarkerIndex);
+				throw "Another marker is being recording.";
 			}
 
-			await AikumaNative.startRecording({
-				path: this.record.getTempAudioUri(markerIndex)
-			});
+			try {
+				await AikumaNative.startRecording({
+					path: this.record.getTempAudioUri(markerIndex),
+					cancelLast: true
+				});
+			} catch (err) {
+				if (err.message === "ALREADY_RECORDING") {
+
+				}
+			}
+
 			this.currentMarkerIndex = markerIndex;
 			this.paused = false;
 
@@ -433,20 +443,51 @@ export class RespeakingRecorder {
 		}
 	}
 
-	async stopRecording(markerIndex: number) {
+	async stopRecording(markerIndex: number, abort: boolean) {
 		if (this.currentMarkerIndex === markerIndex) {
 			this.paused = true;
 			this.currentMarkerIndex = null;
 			const info = await AikumaNative.stopRecording();
-			this.recordingDurations[markerIndex] = info.duration;
-			console.log("Saved marker record for " + markerIndex + " (path: " + info.path + ", duration: " + info.duration.toFixed(2) + ")");
+			const uri = "file://" + info.path;
+			if (abort) {
+				await Filesystem.deleteFile({
+					path: uri
+				});
+				this.tempRecords[markerIndex] = null;
+				console.log("Aborted marker record for " + markerIndex + ", deleted record at '" + info.path + "'.");
+			} else {
+				this.tempRecords[markerIndex] = { uri: uri, duration: info.duration };
+				console.log("Saved marker record for " + markerIndex + " (path: " + info.path + ", duration: " + info.duration.toFixed(2) + ")");
+			}
 		} else {
 			throw "Not recording.";
 		}
+	}
+
+	async resetRecording(markerIndex: number) {
+
+		if (this.currentMarkerIndex === markerIndex) {
+			throw "This marker is being recorder.";
+		}
+
+		const tempRecord = this.tempRecords[markerIndex];
+		if (tempRecord != null) {
+			try {
+				await Filesystem.deleteFile({ path: tempRecord.uri });
+			} catch (ignored) {}
+			this.tempRecords[markerIndex] = null;
+		}
+
 	}
 
 	async saveRespeaking() {
 
 	}
 
+}
+
+
+export interface RespeakingTempRecord {
+	uri: string;
+	duration: number;
 }

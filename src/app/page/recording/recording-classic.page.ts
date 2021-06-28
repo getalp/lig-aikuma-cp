@@ -18,11 +18,10 @@ import {formatDuration} from "../../utils";
 })
 export class RecordingClassicPage implements OnInit, OnDestroy {
 
+	// Re-exports //
 	public formatDuration = formatDuration;
 
-	private rawRecorder: RawRecorder = null;
-	private timeHandle: Promise<PluginListenerHandle>;
-
+	// Public attributes //
 	public duration: number = 0;
 	public record: Record;
 	public speakerDetails: string;
@@ -30,6 +29,10 @@ export class RecordingClassicPage implements OnInit, OnDestroy {
 
 	public started: boolean = false;
 	public paused: boolean = false;
+
+	// Private attributes //
+	private rawRecorder: RawRecorder = null;
+	private recordDurationHandle: Promise<PluginListenerHandle>;
 
 	constructor(
 		private ngZone: NgZone,
@@ -61,7 +64,7 @@ export class RecordingClassicPage implements OnInit, OnDestroy {
 
 		this.recordingDetails = (await this.iso639Service.getLanguage(this.record.language))?.printName;
 
-		this.timeHandle = AikumaNative.addListener("recordDuration", res => {
+		this.recordDurationHandle = AikumaNative.addListener("recordDuration", res => {
 			this.ngZone.run(() => {
 				this.duration = res.duration;
 			});
@@ -73,7 +76,7 @@ export class RecordingClassicPage implements OnInit, OnDestroy {
 
 	async ngOnDestroy() {
 
-		this.timeHandle.then(handle => handle.remove());
+		await (await this.recordDurationHandle).remove();
 
 		if (this.rawRecorder.isStarted()) {
 			this.rawRecorder.stop().catch(() => {});

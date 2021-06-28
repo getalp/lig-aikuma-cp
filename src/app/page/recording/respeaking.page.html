@@ -9,23 +9,45 @@
 
 <ion-content fullscreen>
 
-	<app-waveform-editor #waveform
-						 [style.height]="'50%'"
-						 [style.width]="'100%'"
-						 [timeTicks]="true"
-						 [timeLabels]="true"
-						 (markerSelected)="onWaveformMarkerSelected($event)"></app-waveform-editor>
+	<div class="respeaking-content">
 
-	<div>Selected marker: {{ selectedMarker == null ? "n/a" : ("n°" + selectedMarkerIndex + ", from " + selectedMarker.start.toFixed(1) + " to " + selectedMarker.end.toFixed(1)) }}</div>
-	<div *ngIf="selectedMarker != null">New duration: {{ this.selectedMarkerNewDuration === 0 ? "n/a" : this.selectedMarkerNewDuration.toFixed(1) }}</div>
+		<app-waveform-editor #waveform class="main-waveform"
+							 [timeTicks]="true"
+							 [timeLabels]="true"
+							 (markerSelected)="onWaveformMarkerSelected($event)"></app-waveform-editor>
 
-	<ion-button expand="block" *ngIf="this.selectedMarkerNewDuration !== 0" color="warning" [style.height.px]="100">
-		<ion-icon *ngIf="paused" name="close"></ion-icon>
-	</ion-button>
+		<!-- Using display to allow always have the waveform-editor component loaded -->
+		<div [style.display]="selectedMarker != null && this.selectedMarkerAlreadyRecorded ? '' : 'none'" class="already-recorded">
 
-	<ion-button *ngIf="selectedMarker != null && this.selectedMarkerNewDuration === 0" expand="block" color="light" (click)="onPauseOrResumeClick()" [style.height.px]="100">
-		<ion-icon *ngIf="paused" name="square"></ion-icon>
-		<ion-icon *ngIf="!paused" name="pause"></ion-icon>
-	</ion-button>
+			<app-waveform-editor #previewWaveform
+								 [style.height]="'100%'"
+								 [style.width]="'100%'"
+								 [timeTicks]="true"
+								 [timeLabels]="true"
+								 [moreControls]="[{icon: 'refresh', click: onResetClickCallback}]"></app-waveform-editor>
+
+		</div>
+
+		<div *ngIf="selectedMarker != null && !this.selectedMarkerAlreadyRecorded" class="not-already-recorded">
+
+			<div class="actions">
+				<ion-button expand="block" (click)="onPauseOrResumeClick()">
+					<ion-icon *ngIf="paused" name="square"></ion-icon>
+					<ion-icon *ngIf="!paused" name="pause"></ion-icon>
+				</ion-button>
+				<ion-button expand="block" [disabled]="!started || !paused" (click)="onSaveClick()">
+					<ion-icon name="save"></ion-icon>
+				</ion-button>
+			</div>
+
+			<div class="duration" *ngIf="started">{{ formatDuration(duration, 1) }}</div>
+
+		</div>
+
+		<div *ngIf="selectedMarker == null" class="already-recorded">
+			<p class="instructions">Move the cursor to a marker.</p>
+		</div>
+
+	</div>
 
 </ion-content>

@@ -2,7 +2,8 @@
 import {Plugin, PluginListenerHandle} from "@capacitor/core/types/definitions";
 
 export interface RecordOptions {
-	path: string
+	path: string,
+	cancelLast?: boolean
 }
 
 export interface RecordInfo {

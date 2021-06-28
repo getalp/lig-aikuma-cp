@@ -14,6 +14,7 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 import com.getcapacitor.annotation.Permission;
 import com.getcapacitor.annotation.PermissionCallback;
 
+import java.io.File;
 import java.io.IOException;
 
 @CapacitorPlugin(
@@ -54,8 +55,20 @@ public class NativePlugin extends Plugin {
 		}
 
 		if (this.recorder != null) {
-			call.reject(ERR_ALREADY_RECORDING);
-			return;
+
+			if (call.getBoolean("cancelLast", false)) {
+
+				this.stopRecorder();
+				File file = new File(this.path);
+				file.delete();
+				this.path = null;
+				this.totalTime = 0;
+
+			} else {
+				call.reject(ERR_ALREADY_RECORDING);
+				return;
+			}
+
 		}
 
 		if (!this.isMicrophoneAvailable()) {
@@ -154,14 +167,7 @@ public class NativePlugin extends Plugin {
 			return;
 		}
 
-		this.recorder.stop();
-
-		if (!this.paused) {
-			this.pauseDuration();
-		}
-
-		this.recorder.release();
-		this.recorder = null;
+		this.stopRecorder();
 
 		try {
 			this.durationThread.join(1000);
@@ -174,6 +180,7 @@ public class NativePlugin extends Plugin {
 		JSObject obj = new JSObject();
 		obj.put("path", this.path);
 		obj.put("duration", this.totalTime * 1e-9D);
+		this.path = null;
 		this.totalTime = 0;
 		this.notifyDurationListeners();
 
@@ -191,6 +198,19 @@ public class NativePlugin extends Plugin {
 			obj.put("duration", this.getDuration());
 			call.resolve(obj);
 		}
+	}
+
+	private void stopRecorder() {
+
+		this.recorder.stop();
+
+		if (!this.paused) {
+			this.pauseDuration();
+		}
+
+		this.recorder.release();
+		this.recorder = null;
+
 	}
 
 	private void runDurationThread() {

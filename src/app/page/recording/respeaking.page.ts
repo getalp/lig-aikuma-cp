@@ -1,9 +1,13 @@
-import {AfterViewInit, Component, OnDestroy, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, NgZone, OnDestroy, ViewChild} from '@angular/core';
 import {Record, RecordType} from "../../record";
 import {ActivatedRoute} from "@angular/router";
 import {RecordService, RespeakingRecorder} from "../../service/record.service";
 import {WaveformEditorComponent, WaveformMarker} from "../../widget/waveform/editor.component";
 import {Toast} from "@capacitor/toast";
+import {AlertController} from "@ionic/angular";
+import {formatDuration} from "../../utils";
+import {AikumaNative} from "../../native";
+import {PluginListenerHandle} from "@capacitor/core/types/definitions";
 
 
 @Component({
@@ -13,22 +17,37 @@ import {Toast} from "@capacitor/toast";
 })
 export class RespeakingPage implements AfterViewInit, OnDestroy {
 
+	// Re-exports //
+	public formatDuration = formatDuration;
+	public onResetClickCallback = (() => this.onResetClick());
+
+	// Element refs //
 	@ViewChild("waveform")
 	private waveformEditorRef: WaveformEditorComponent;
+	@ViewChild("previewWaveform")
+	private previewWaveformEditorRef: WaveformEditorComponent;
 
+	// Public attributes //
 	public record: Record;
 	public parentRecord: Record;
 
 	public selectedMarkerIndex: number | null = null;
 	public selectedMarker: WaveformMarker | null = null;
-	public selectedMarkerNewDuration: number = 0;
-	public paused: boolean = true;
+	public selectedMarkerAlreadyRecorded: boolean = false;
 
+	public started: boolean = false;
+	public paused: boolean = true;
+	public duration: number = 0;
+
+	// Private attributes //
 	private respeakingRecorder: RespeakingRecorder;
+	private recordDurationHandle: Promise<PluginListenerHandle>;
 
 	constructor(
+		private ngZone: NgZone,
 		private route: ActivatedRoute,
-		private recordService: RecordService
+		private recordService: RecordService,
+		private alertController: AlertController
 	) { }
 
 	async ngAfterViewInit() {
@@ -52,9 +71,18 @@ export class RespeakingPage implements AfterViewInit, OnDestroy {
 
 		this.respeakingRecorder = await this.recordService.beginRespeakingRecord(this.record);
 
+		this.recordDurationHandle = AikumaNative.addListener("recordDuration", res => {
+			this.ngZone.run(() => {
+				this.duration = res.duration;
+			});
+		});
+
 	}
 
 	async ngOnDestroy() {
+
+		await (await this.recordDurationHandle).remove();
+
 		if (this.record != null) {
 			if (!this.record.hasAudio) {
 				console.log("Not recorded, deleting record.");
@@ -62,23 +90,114 @@ export class RespeakingPage implements AfterViewInit, OnDestroy {
 			}
 			this.record = null;
 		}
+
 	}
 
 	async onWaveformMarkerSelected(marker: [number, WaveformMarker]) {
+
 		if (this.selectedMarkerIndex != null && this.respeakingRecorder.isStarted() === this.selectedMarkerIndex) {
-			await this.respeakingRecorder.stopRecording(this.selectedMarkerIndex);
+
+			const alert = await this.alertController.create({
+				header: "Record is not saved!",
+				subHeader: "Save the current record before leaving.",
+				buttons: [
+					{
+						text: "Move without save",
+						role: "cancel",
+						handler: async () => {
+							await this.doStop(true);
+							await this.onWaveformMarkerSelected(marker);
+						}
+					},
+					{
+						text: "Save",
+						handler: async () => {
+							await this.doStop(false);
+							await this.onWaveformMarkerSelected(marker);
+						}
+					}
+				]
+			});
+
+			alert.present().then();
+			return;
+
 		}
-		this.selectedMarkerIndex = (marker == null) ? null : marker[0];
-		this.selectedMarker = (marker == null) ? null : marker[1];
-		this.selectedMarkerNewDuration = (marker == null) ? 0 : this.respeakingRecorder.getRecordingDuration(marker[0]);
+
+		if (marker == null) {
+			this.selectedMarkerIndex = null;
+			this.selectedMarker = null;
+		} else {
+			this.selectedMarkerIndex = marker[0];
+			this.selectedMarker = marker[1];
+		}
+
+		await this.updateSelectedMarkerInfo();
+
+		this.started = false;
 		this.paused = true;
+
 	}
 
 	async onPauseOrResumeClick() {
 		if (this.selectedMarkerIndex != null) {
 			await this.respeakingRecorder.toggleRecording(this.selectedMarkerIndex);
+			this.started = this.respeakingRecorder.isStarted() != null;
 			this.paused = this.respeakingRecorder.isPaused();
 		}
+	}
+
+	async onSaveClick() {
+		if (this.selectedMarkerIndex != null && this.respeakingRecorder.isStarted() === this.selectedMarkerIndex) {
+			await this.doStop(false);
+		}
+	}
+
+	async onResetClick() {
+		if (this.selectedMarkerIndex != null) {
+
+			const alert = await this.alertController.create({
+				header: "Reset this record?",
+				subHeader: "Reset this record to retry.",
+				buttons: [
+					{
+						text: "Cancel",
+						role: "cancel"
+					},
+					{
+						text: "Reset",
+						handler: async () => {
+							await this.respeakingRecorder.resetRecording(this.selectedMarkerIndex);
+							await this.updateSelectedMarkerInfo();
+						}
+					}
+				]
+			});
+
+			alert.present().then();
+
+		}
+	}
+
+	// Private //
+
+	private async doStop(abort: boolean) {
+		await this.respeakingRecorder.stopRecording(this.selectedMarkerIndex, abort);
+		await this.updateSelectedMarkerInfo();
+		this.started = false;
+		this.paused = true;
+	}
+
+	private async updateSelectedMarkerInfo() {
+		const tempRecord = (this.selectedMarkerIndex == null) ? null : this.respeakingRecorder.getTempRecord(this.selectedMarkerIndex);
+		if (tempRecord == null) {
+			this.selectedMarkerAlreadyRecorded = false;
+			// await this.previewWaveformEditorRef.unload();
+		} else {
+			this.selectedMarkerAlreadyRecorded = true;
+			await this.previewWaveformEditorRef.load(tempRecord.uri);
+		}
+		// this.changeDetector.detectChanges();
 	}
 
 }

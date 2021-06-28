@@ -674,6 +674,10 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		this.audioLoading = false;
 	}
 
+	async unload() {
+		await this.loadAudioArray(null);
+	}
+
 	isLoaded(): boolean {
 		return this.waveformData != null;
 	}
