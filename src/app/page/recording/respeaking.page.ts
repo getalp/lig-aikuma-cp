@@ -20,6 +20,7 @@ export class RespeakingPage implements AfterViewInit, OnDestroy {
 	// Re-exports //
 	public formatDuration = formatDuration;
 	public onResetClickCallback = (() => this.onResetClick());
+	public onGlobalSaveClickCallback = (() => this.onGlobalSaveClick());
 
 	// Element refs //
 	@ViewChild("waveform")
@@ -179,6 +180,54 @@ export class RespeakingPage implements AfterViewInit, OnDestroy {
 		}
 	}
 
+	async onGlobalSaveClick() {
+
+		if (this.started) {
+			const alert = await this.alertController.create({
+				header: "Please finish your respeaking before saving.",
+				buttons: [
+					{
+						text: "Ok",
+						role: "cancel"
+					}
+				]
+			});
+			alert.present().then();
+		} else {
+			const respeakingCount = this.respeakingRecorder.getTempRecordCount();
+			if (respeakingCount > 0) {
+				const alert = await this.alertController.create({
+					header: "Save the respeaking?",
+					buttons: [
+						{
+							text: "Cancel",
+							role: "cancel"
+						},
+						{
+							text: "Save",
+							handler: async () => {
+								await this.doGlobalSave();
+							}
+						}
+					]
+				});
+				alert.present().then();
+			} else {
+				const alert = await this.alertController.create({
+					header: "You must respeak at least one segment.",
+					buttons: [
+						{
+							text: "Ok",
+							role: "cancel"
+						}
+					]
+				});
+				alert.present().then();
+			}
+		}
+
+	}
+
 	// Private //
 
 	private async doStop(abort: boolean) {
@@ -197,6 +246,10 @@ export class RespeakingPage implements AfterViewInit, OnDestroy {
 			this.selectedMarkerAlreadyRecorded = true;
 			await this.previewWaveformEditorRef.load(tempRecord.uri);
 		}
+	}
+
+	private async doGlobalSave() {
+		await this.respeakingRecorder.saveRespeaking();
 	}
 
 }

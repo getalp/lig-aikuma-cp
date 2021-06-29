@@ -388,6 +388,10 @@ export class RespeakingRecorder {
 		return this.tempRecords[markerIndex];
 	}
 
+	getTempRecordCount(): number {
+		return this.tempRecords.filter(record => (record != null)).length;
+	}
+
 	private checkMarkerIndex(index: number) {
 		if (index < 0 || index >= this.record.markers.length) {
 			throw "Invalid marker index.";
