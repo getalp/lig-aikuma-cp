@@ -1,6 +1,6 @@
 import {WebPlugin} from '@capacitor/core';
 
-import type {NativePlugin, RecordOptions, RecordInfo, RecordDuration} from './definitions';
+import type {NativePlugin, RecordOptions, RecordInfo, RecordDuration, ConcatAudioOptions} from './definitions';
 
 export class NativePluginWeb extends WebPlugin implements NativePlugin {
 
@@ -21,7 +21,11 @@ export class NativePluginWeb extends WebPlugin implements NativePlugin {
 	}
 
 	getRecordDuration(): Promise<RecordDuration> {
-		return Promise.resolve(undefined);
+		return Promise.reject("Not implemented");
+	}
+
+	concatAudioAcc(options: ConcatAudioOptions): Promise<void> {
+		return Promise.reject("Not implemented");
 	}
 
 }

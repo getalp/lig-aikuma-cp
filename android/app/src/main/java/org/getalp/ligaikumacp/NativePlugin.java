@@ -5,6 +5,9 @@ import android.content.Context;
 import android.media.AudioManager;
 import android.media.MediaRecorder;
 
+import com.arthenica.ffmpegkit.FFmpegKit;
+import com.arthenica.ffmpegkit.FFmpegSession;
+import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.PermissionState;
 import com.getcapacitor.Plugin;
@@ -14,8 +17,14 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 import com.getcapacitor.annotation.Permission;
 import com.getcapacitor.annotation.PermissionCallback;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.StringJoiner;
 
 @CapacitorPlugin(
 	name = "AikumaNative",
@@ -83,8 +92,8 @@ public class NativePlugin extends Plugin {
 			if (path == null) {
 				call.reject(ERR_INVALID_PATH);
 				return;
-			} else if (path.startsWith("file://")) {
-				path = path.substring("file://".length());
+			} else {
+				path = filterFileScheme(path);
 			}
 
 			this.recorder = new MediaRecorder();
@@ -200,6 +209,122 @@ public class NativePlugin extends Plugin {
 		}
 	}
 
+	@PluginMethod
+	@SuppressWarnings("unused")
+	public void concatAudioAcc(PluginCall call) {
+
+		File cacheDir = this.getContext().getCacheDir();
+		int concatUid = (int) (Math.random() * 100000000);
+
+		JSArray segments = call.getArray("segments", null);
+		String finalPath = call.getString("path", null);
+
+		if (segments == null || finalPath == null) {
+			call.reject("invalid_options");
+			return;
+		}
+
+		List<File> filesToDelete = new ArrayList<>(segments.length() + 1);
+		StringJoiner joiner = new StringJoiner("|", "concat:", "");
+
+		String abort = null;
+
+		for (int i = 0; i < segments.length(); ++i) {
+			try {
+
+				JSONObject segment = segments.getJSONObject(i);
+				String path = filterFileScheme(segment.getString("path"));
+				double from = segment.getDouble("from");
+				double to = segment.getDouble("to");
+
+				File file = new File(path);
+				if (!file.isFile()) {
+					abort = "segment_file_not_found_" + i;
+					break;
+				}
+
+				File mpegTsDstFile = new File(cacheDir, "concat-segment-" + concatUid + "-" + i + ".ts");
+				filesToDelete.add(mpegTsDstFile);
+
+				boolean hasFrom = (from >= 0);
+				boolean hasTo = (to > 0);
+
+				// Build arguments
+				int j = 0;
+				String[] args = new String[5 + (hasFrom ? 2 : 0) + (hasTo ? 2 : 0)];
+				args[j++] = "-i";
+				args[j++] = file.getAbsolutePath();
+				if (hasFrom) {
+					args[j++] = "-ss";
+					args[j++] = Double.toString(from);
+				}
+				if (hasTo) {
+					args[j++] = "-to";
+					args[j++] = Double.toString(to);
+				}
+				args[j++] = "-c";
+				args[j++] = "copy";
+				args[j] = mpegTsDstFile.getAbsolutePath();
+
+				// Call FFmpeg
+				FFmpegSession session = FFmpegKit.execute(args);
+
+				if (session.getReturnCode().isSuccess()) {
+					joiner.add(mpegTsDstFile.getAbsolutePath());
+					System.out.println("converted file to: " + mpegTsDstFile.getAbsolutePath());
+				} else {
+					abort = "segment_file_failed_" + i;
+					break;
+				}
+
+			} catch (JSONException e) {
+				abort = "invalid_options";
+				break;
+			}
+		}
+
+		if (abort == null) {
+
+			File mpegTsFinalFile = new File(cacheDir, "concat-" + concatUid + ".ts");
+			filesToDelete.add(mpegTsFinalFile);
+
+			FFmpegSession session = FFmpegKit.execute(new String[]{
+				"-i", joiner.toString(),
+				"-c", "copy",
+				mpegTsFinalFile.getAbsolutePath()
+			});
+
+			if (!session.getReturnCode().isSuccess()) {
+				abort = "concat_failed";
+			} else {
+
+				System.out.println("concatenation done to: " + mpegTsFinalFile.getAbsolutePath());
+
+				File finalFile = new File(filterFileScheme(finalPath));
+				finalFile.delete();
+
+				session = FFmpegKit.execute(new String[]{"-i", mpegTsFinalFile.getAbsolutePath(), finalFile.getAbsolutePath()});
+
+				if (!session.getReturnCode().isSuccess()) {
+					abort = "final_encoding_failed";
+				}
+
+			}
+
+		}
+
+		for (File fileToDelete : filesToDelete) {
+			fileToDelete.delete();
+		}
+
+		if (abort != null) {
+			call.reject(abort);
+		} else {
+			call.resolve();
+		}
+
+	}
+
 	private void stopRecorder() {
 
 		this.recorder.stop();
@@ -256,6 +381,14 @@ public class NativePlugin extends Plugin {
 	private boolean isMicrophoneAvailable() {
 		AudioManager manager = (AudioManager) this.getContext().getSystemService(Context.AUDIO_SERVICE);
 		return manager != null && manager.getMode() == AudioManager.MODE_NORMAL;
+	}
+
+	private static String filterFileScheme(String path) {
+		if (path.startsWith("file://")) {
+			return path.substring("file://".length());
+		} else {
+			return path;
+		}
 	}
 
 }

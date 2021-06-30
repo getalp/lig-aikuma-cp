@@ -15,6 +15,17 @@ export interface RecordDuration {
 	duration: number
 }
 
+export interface ConcatAudioOptions {
+	path: string,
+	segments: ConcatAudioSegment[]
+}
+
+export interface ConcatAudioSegment {
+	path: string,
+	from: number, // seconds with decimals
+	to: number    // seconds with decimals
+}
+
 export interface NativePlugin extends Plugin {
 
 	/**
@@ -45,6 +56,8 @@ export interface NativePlugin extends Plugin {
 	stopRecording(): Promise<RecordInfo>;
 
 	getRecordDuration(): Promise<RecordDuration>;
+
+	concatAudioAcc(options: ConcatAudioOptions): Promise<void>;
 
 	addListener(eventName: "recordDuration", listenerFunc: (duration: RecordDuration) => void): Promise<PluginListenerHandle>;
 

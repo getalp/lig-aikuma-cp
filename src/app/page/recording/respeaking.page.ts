@@ -30,7 +30,6 @@ export class RespeakingPage implements AfterViewInit, OnDestroy {
 
 	// Public attributes //
 	public record: Record;
-	public parentRecord: Record;
 
 	public selectedMarkerIndex: number | null = null;
 	public selectedMarker: WaveformMarker | null = null;
@@ -63,12 +62,11 @@ export class RespeakingPage implements AfterViewInit, OnDestroy {
 			return;
 		}
 
-		this.parentRecord = this.record.parent;
-		this.parentRecord.copyMarkersTo(this.record);
-		this.record.markersReady = true;
+		// this.parentRecord.copyMarkersTo(this.record);
+		// this.record.markersReady = true;
 
 		// Loading the waveform from the code and not from attribute to allow awaiting.
-		await this.waveformEditorRef.loadRecord(this.parentRecord, true);
+		await this.waveformEditorRef.loadRecord(this.record.parent, true);
 
 		this.respeakingRecorder = await this.recordService.beginRespeakingRecord(this.record);
 

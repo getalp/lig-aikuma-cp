@@ -2,7 +2,7 @@ import {Injectable} from '@angular/core';
 
 import {Encoding, Filesystem, ReaddirResult, StatResult} from '@capacitor/filesystem'
 import {LocalNotifications} from "@capacitor/local-notifications";
-import {AikumaNative} from "../native";
+import {AikumaNative, ConcatAudioSegment} from "../native";
 
 import {computePath, getCommonOptions, ROOT} from "../files";
 import {deserializeRecord, Record, RecordSerialized, RecordType, serializeRecord} from "../record";
@@ -221,8 +221,12 @@ export class RecordService {
 			throw "The record was not loaded from file system.";
 		} else if (record.type !== RecordType.Respeaking) {
 			throw "The record is not a respeaking.";
-		} else if (!record.hasAnyMarker()) {
-			throw "The record is a respeaking but has no marker for it.";
+		} else if (record.parent == null) {
+			throw "The record need a parent.";
+		} else if (!record.parent.hasAnyMarker()) {
+			throw "The record need a parent with at least 1 marker.";
+		} else if (!record.parent.hasAudio) {
+			throw "The record need a parent with an audio.";
 		} else {
 			return new RespeakingRecorder(this, record);
 		}
@@ -368,7 +372,7 @@ export class RespeakingRecorder {
 		private service: RecordService,
 		private record: Record
 	) {
-		for (let i = 0; i < this.record.markers.length; ++i) {
+		for (let i = 0; i < this.record.parent.markers.length; ++i) {
 			this.tempRecords.push(null);
 		}
 	}
@@ -393,7 +397,7 @@ export class RespeakingRecorder {
 	}
 
 	private checkMarkerIndex(index: number) {
-		if (index < 0 || index >= this.record.markers.length) {
+		if (index < 0 || index >= this.record.parent.markers.length) {
 			throw "Invalid marker index.";
 		}
 	}
@@ -485,6 +489,60 @@ export class RespeakingRecorder {
 	}
 
 	async saveRespeaking() {
+
+		const segments: ConcatAudioSegment[] = [];
+		const recordAudioUri = this.record.parent.getAudioUri();
+
+		let parentStartTime = 0;
+		let totalTime = 0;
+
+		this.record.clearMarkers();
+
+		for (let markerIndex = 0; markerIndex < this.tempRecords.length; ++markerIndex) {
+			const tempRecord = this.tempRecords[markerIndex];
+			if (tempRecord != null) {
+
+				const marker = this.record.parent.markers[markerIndex];
+
+				totalTime += marker.start - parentStartTime;
+				this.record.addMarker(totalTime, totalTime + tempRecord.duration);
+				totalTime += tempRecord.duration;
+
+				segments.push({
+					path: recordAudioUri,
+					from: parentStartTime,
+					to: marker.start
+				});
+
+				segments.push({
+					path: tempRecord.uri,
+					from: -1,
+					to: -1
+				});
+
+				parentStartTime = marker.end;
+
+			}
+		}
+
+		totalTime += this.record.parent.duration - parentStartTime;
+
+		segments.push({
+			path: recordAudioUri,
+			from: parentStartTime,
+			to: -1
+		});
+
+		await AikumaNative.concatAudioAcc({
+			path: this.record.getAudioUri(),
+			segments: segments
+		});
+
+		this.record.markersReady = true;
+		this.record.hasAudio = true;
+		this.record.duration = totalTime;
+
+		await this.service.saveRecord(this.record);
 
 	}
 
