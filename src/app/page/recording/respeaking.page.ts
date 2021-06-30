@@ -8,6 +8,7 @@ import {AlertController} from "@ionic/angular";
 import {formatDuration} from "../../utils";
 import {AikumaNative} from "../../native";
 import {PluginListenerHandle} from "@capacitor/core/types/definitions";
+import {Location} from "@angular/common";
 
 
 @Component({
@@ -47,7 +48,8 @@ export class RespeakingPage implements AfterViewInit, OnDestroy {
 		private ngZone: NgZone,
 		private route: ActivatedRoute,
 		private recordService: RecordService,
-		private alertController: AlertController
+		private alertController: AlertController,
+		private location: Location
 	) { }
 
 	async ngAfterViewInit() {
@@ -62,8 +64,11 @@ export class RespeakingPage implements AfterViewInit, OnDestroy {
 			return;
 		}
 
-		// this.parentRecord.copyMarkersTo(this.record);
-		// this.record.markersReady = true;
+		if (this.record.hasAudio) {
+			await Toast.show({text: "This respeaking is already done."});
+			this.record = null;
+			return;
+		}
 
 		// Loading the waveform from the code and not from attribute to allow awaiting.
 		await this.waveformEditorRef.loadRecord(this.record.parent, true);
@@ -248,6 +253,10 @@ export class RespeakingPage implements AfterViewInit, OnDestroy {
 
 	private async doGlobalSave() {
 		await this.respeakingRecorder.saveRespeaking();
+		// Go back to records list
+		this.location.back();
+		this.location.back();
+		this.location.back();
 	}
 
 }

@@ -94,6 +94,22 @@ export enum RecordType {
 }
 
 
+export function getRecordTypeIcon(type: RecordType): string {
+	switch (type) {
+		case RecordType.Raw: return "mic";
+		case RecordType.Respeaking: return "volume-high";
+	}
+}
+
+
+export function getRecordTypeText(type: RecordType): string {
+	switch (type) {
+		case RecordType.Raw: return "Raw";
+		case RecordType.Respeaking: return "Respeaking";
+	}
+}
+
+
 export class RecordMarker {
 
 	constructor(

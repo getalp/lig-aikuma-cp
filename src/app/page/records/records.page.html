@@ -12,7 +12,8 @@
 	<ion-list>
 		<ion-item button *ngFor="let record of records"
 				  [color]="record[0].markersReady ? null : 'warning'"
-				  [routerLink]="'/record/' + record[0].dirName" [detail]="true">
+				  [routerLink]="'/record/' + record[0].dirName"
+				  [detail]="true" [detailIcon]="record[0].parent != null ? 'git-branch' : 'mic'">
 			<ion-label>
 				<h2>{{ record[0].date.toLocaleString() }}<span *ngIf="record[0].duration != null">&nbsp;&bull;&nbsp;{{ formatDuration(record[0].duration) }}</span></h2>
 				<h4>{{ record[0].speaker.name }}&nbsp;&bull;&nbsp;{{ (record[1] | async).printName }}<span *ngIf="!record[0].markersReady">&nbsp;&bull;&nbsp;markers missing</span></h4>

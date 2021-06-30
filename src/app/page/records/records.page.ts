@@ -1,6 +1,6 @@
 import {Component, OnInit} from '@angular/core';
 import {RecordService} from "../../service/record.service";
-import {Record} from "../../record";
+import {getRecordTypeIcon, Record} from "../../record";
 import {Iso639Service, Language} from "../../service/iso-639.service";
 import {formatDuration} from "../../utils";
 import {ViewWillEnter} from "@ionic/angular";
@@ -13,7 +13,8 @@ import {ViewWillEnter} from "@ionic/angular";
 })
 export class RecordsPage implements OnInit, ViewWillEnter {
 
-	records: [Record, Promise<Language>][];
+	// Public attributes
+	public records: [Record, Promise<Language>][];
 
 	constructor(
 		private recordService: RecordService,

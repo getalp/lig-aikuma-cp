@@ -1,6 +1,6 @@
 import {Component, Input} from '@angular/core';
 import {SpeakerService} from "../service/speaker.service";
-import {Record} from "../record";
+import {getRecordTypeIcon, getRecordTypeText, Record} from "../record";
 import {Iso639Service} from "../service/iso-639.service";
 import {formatDuration} from "../utils";
 
@@ -18,18 +18,32 @@ import {formatDuration} from "../utils";
 				<p>Recorded in: {{ recordLanguage }}</p>
 				<p>Date: {{ internalRecord.date.toLocaleString() }}</p>
 				<p>Duration: {{ formatDuration(internalRecord.duration) }}</p>
+				<p>Type: {{ getRecordTypeText(internalRecord.type) }}&nbsp;<ion-icon class="record-type-icon" [name]="getRecordTypeIcon(internalRecord.type)"></ion-icon></p>
 				<p *ngIf="internalRecord.notes != null && internalRecord.notes.length !== 0">Notes: {{ internalRecord.notes }}</p>
 			</ion-card-content>
 		</ion-card>
-	`
+	`,
+	styles: [
+		`
+		.record-type-icon {
+			font-size: 15px;
+			position: relative;
+			top: 3px;
+		}
+		`
+	]
 })
 export class RecordCardComponent {
 
-	formatDuration = formatDuration;
+	// Re-exports
+	public formatDuration = formatDuration;
+	public getRecordTypeIcon = getRecordTypeIcon;
+	public getRecordTypeText = getRecordTypeText;
 
-	internalRecord: Record = null;
-	speakerDetails: string = null;
-	recordLanguage: string = null;
+	// Public attributes
+	public internalRecord: Record = null;
+	public speakerDetails: string = null;
+	public recordLanguage: string = null;
 
 	constructor(
 		private speakerService: SpeakerService,
