@@ -6,6 +6,8 @@ import {IonicModule} from "@ionic/angular";
 import {SpeakerSelectComponent} from "./speaker-input.component";
 import {RecordCardComponent} from "./record-card.component";
 import {WaveformEditorComponent} from "./waveform/editor.component";
+import {RecordsListComponent} from "./records-list.component";
+import {AppRoutingModule} from "../app-routing.module";
 
 
 @NgModule({
@@ -13,19 +15,22 @@ import {WaveformEditorComponent} from "./waveform/editor.component";
 		LangageSelectComponent,
 		SpeakerSelectComponent,
 		RecordCardComponent,
-		WaveformEditorComponent
+		WaveformEditorComponent,
+		RecordsListComponent
 	],
 	imports: [
 		CommonModule,
-		IonicModule
+		IonicModule,
+		AppRoutingModule
 	],
 	exports: [
 		LangageSelectComponent,
 		SpeakerSelectComponent,
 		RecordCardComponent,
-		WaveformEditorComponent
+		WaveformEditorComponent,
+		RecordsListComponent
 	]
 })
 export class WidgetModule {
-
+	// Nothing
 }

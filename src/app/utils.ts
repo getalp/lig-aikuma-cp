@@ -30,3 +30,7 @@ export function formatDuration(dur: number, precision: number = 0): string {
 	return str;
 
 }
+
+export function getNullablePropertyOrDefault<E, K extends keyof E>(obj: E, name: K, def: E[K]): E[K] {
+	return obj == null ? def : obj[name];
+}

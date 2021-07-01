@@ -17,28 +17,21 @@
 						 [style.width]="'100%'"
 						 [timeLabels]="true"></app-waveform-editor>
 
-	<ion-list *ngIf="record.type == RecordType.Raw">
-		<ion-list-header>
-			<h5>Derived records</h5>
-		</ion-list-header>
-		<ion-item>
-			<ion-label>
-				<h2>No derivative record</h2>
-			</ion-label>
-		</ion-item>
-	</ion-list>
+	<app-records-list *ngIf="record.children.length !== 0" [records]="record.children" titleText="Derived records"></app-records-list>
+
+	<app-records-list *ngIf="record.parent != null" [records]="[record.parent]" titleText="Parent record"></app-records-list>
 
 	<ion-list>
 		<ion-list-header>
 			<h5>Actions</h5>
 		</ion-list-header>
-		<ion-item button [color]="record.markersReady ? null : 'warning'" [routerLink]="'/mark/' + record.dirName">
+		<ion-item button [color]="record.markersReady ? null : 'warning'" [detail]="true" [routerLink]="'/mark/' + record.dirName">
 			<ion-icon slot="start" ios="bookmarks-outline" md="bookmarks"></ion-icon>
 			<ion-label>
 				<h2>Marking ({{ record.markersReady ? (record.markers.length + " marker" + (record.markers.length > 1 ? "s" : "")) : "missing" }})</h2>
 			</ion-label>
 		</ion-item>
-		<ion-item button [disabled]="!record.hasAnyMarker()" [routerLink]="'/recording-info/respeaking/' + record.dirName">
+		<ion-item button [disabled]="!record.hasAnyMarker()" [detail]="true" [routerLink]="'/recording-info/respeaking/' + record.dirName">
 			<ion-icon slot="start" ios="volume-high-outline" md="volume-high"></ion-icon>
 			<ion-label>
 				<h2>Respeaking<span *ngIf="!record.hasAnyMarker()"> (need markers)</span></h2>

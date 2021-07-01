@@ -6,6 +6,7 @@ import {Location} from "@angular/common";
 import {RecordService} from "../../service/record.service";
 import {Iso639Service} from "../../service/iso-639.service";
 import {Record, RecordType} from "../../record";
+import {formatDuration} from "../../utils";
 
 
 @Component({
@@ -15,9 +16,13 @@ import {Record, RecordType} from "../../record";
 })
 export class RecordPage implements OnInit, ViewWillEnter {
 
-	RecordType = RecordType
+	// Re-export
+	public RecordType = RecordType;
+	public formatDuration = formatDuration;
 
-	record: Record;
+	// Public attributes
+	public record: Record;
+	public
 
 	constructor(
 		private route: ActivatedRoute,

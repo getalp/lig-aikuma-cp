@@ -60,7 +60,6 @@ export class RecordService {
 				const dirPath = computePath([RecordService.RECORDS_DIR, recordDir]);
 
 				const metaPath = Record.getMetaPathFromDirPath(dirPath);
-				// const basePath = computePath([RecordService.RECORDS_DIR, recordDir, "raw"]);
 
 				// Legacy compatibility loading
 				try {
@@ -83,16 +82,14 @@ export class RecordService {
 				const record = deserializeRecord(recordSerialized);
 				record.dirName = recordDir;
 				record.dirPath = computePath([RecordService.RECORDS_DIR, recordDir]);
-				//record.basePath = basePath;
 				record.dirUri = dirsStat.uri + "/" + recordDir;
-				//record.baseUri = record.dirUri + "/raw";
 
 				if (recordSerialized.parent != null) {
 					recordsWithParent.push([record, recordSerialized.parent]);
 				}
 
 				try {
-					await Filesystem.stat(getCommonOptions(record.getAudioPath() /*record.getAacPath()*/));
+					await Filesystem.stat(getCommonOptions(record.getAudioPath()));
 					record.hasAudio = true;
 				} catch (ignored) {}
 
@@ -146,9 +143,7 @@ export class RecordService {
 
 				record.dirName = dir;
 				record.dirPath = dirPath;
-				//record.basePath = computePath([RecordService.RECORDS_DIR, dir, "raw"]);
 				record.dirUri = res.uri;
-				//record.baseUri = record.dirUri + "/raw";
 
 				if (record.parent != null) {
 					record.parent.children.push(record);
@@ -168,11 +163,6 @@ export class RecordService {
 	}
 
 	async deleteRecord(record: Record): Promise<void> {
-
-		/*if (!record.isRoot()) {
-			throw "You must use the raw record without parent to delete the directory.";
-			// TODO: Add support for removing "Derived records".
-		}*/
 
 		await Filesystem.rmdir({
 			...getCommonOptions(record.dirPath),

@@ -1,8 +1,6 @@
 import {Component, OnInit} from '@angular/core';
 import {RecordService} from "../../service/record.service";
-import {getRecordTypeIcon, Record} from "../../record";
-import {Iso639Service, Language} from "../../service/iso-639.service";
-import {formatDuration} from "../../utils";
+import {Record} from "../../record";
 import {ViewWillEnter} from "@ionic/angular";
 
 
@@ -14,11 +12,10 @@ import {ViewWillEnter} from "@ionic/angular";
 export class RecordsPage implements OnInit, ViewWillEnter {
 
 	// Public attributes
-	public records: [Record, Promise<Language>][];
+	public records: Record[];
 
 	constructor(
-		private recordService: RecordService,
-		private iso639Service: Iso639Service
+		private recordService: RecordService
 	) { }
 
 	ngOnInit(): void {
@@ -29,14 +26,8 @@ export class RecordsPage implements OnInit, ViewWillEnter {
 		this.refresh().then();
 	}
 
-	formatDuration(dur: number): string {
-		return formatDuration(dur);
-	}
-
 	private async refresh() {
-		this.records = Object.values(await this.recordService.ensureLoaded())
-			.sort((a, b) => b.date.getTime() - a.date.getTime())
-			.map(record => [record, this.iso639Service.getLanguage(record.language)]);
+		this.records = Object.values(await this.recordService.ensureLoaded());
 	}
 
 }
