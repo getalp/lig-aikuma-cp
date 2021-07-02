@@ -22,14 +22,15 @@ export interface ConcatAudioOptions {
 
 export interface ConcatAudioSegment {
 	path: string,
-	from: number, // seconds with decimals
-	to: number    // seconds with decimals
+	from: number, // seconds with decimals, -1 <=> from start
+	to: number    // seconds with decimals, -1 <=> to end
 }
 
 export interface NativePlugin extends Plugin {
 
 	/**
 	 * Standardized rejects:
+	 * - NOT_SUPPORTED (web-only)
 	 * - MISSING_PERMISSION
 	 * - ALREADY_RECORDING
 	 * - MICROPHONE_NOT_AVAILABLE
@@ -55,6 +56,10 @@ export interface NativePlugin extends Plugin {
 	 */
 	stopRecording(): Promise<RecordInfo>;
 
+	/**
+	 * Standardized rejects:
+	 * - NOT_RECORDING
+	 */
 	getRecordDuration(): Promise<RecordDuration>;
 
 	concatAudioAcc(options: ConcatAudioOptions): Promise<void>;

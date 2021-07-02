@@ -5,8 +5,7 @@
 
 .waveform-editor-container {
 	position: absolute;
-	overflow-x: scroll;
-	overflow-y: hidden;
+	overflow: hidden;
 	width: 100%;
 	height: 100%;
 	border-top-style: solid;
@@ -30,7 +29,8 @@
 	top: 50%;
 	transform: translateY(-50%);
 	z-index: 2;
-	color: #525252;
+	color: var(--ion-color-dark);
+	// color: #525252;
 	font-size: 15px;
 	text-align: center;
 	pointer-events: none;
@@ -58,12 +58,15 @@
 		line-height: 25px;
 		padding: 10px 10px 6px 10px;
 		background-color: transparent;
-		color: #1a1a1a;
+		color: var(--ion-color-dark);
+		// color: #1a1a1a;
 		transition: background-color .2s, color .2s;
 
 		&:active {
-			background-color: #1a1a1a;
-			color: #e3e3e3;
+			// background-color: #1a1a1a;
+			// color: #e3e3e3;
+			background-color: var(--ion-color-dark);
+			color: var(--ion-color-light);
 		}
 
 		&:last-child {

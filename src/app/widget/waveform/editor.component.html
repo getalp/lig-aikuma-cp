@@ -19,8 +19,8 @@
 	<div class="control" (click)="stop()" *ngIf="isPlaying()"><ion-icon name="stop"></ion-icon></div>
 
 	<div class="spacer" *ngIf="canEditMarkers"></div>
-	<div class="control" (click)="addMarkerAtStartTime()" *ngIf="canEditMarkers && selectedMarkerIndex == null"><ion-icon name="bookmark"></ion-icon></div>
-	<div class="control" (click)="popSelectedMarker()" *ngIf="canEditMarkers && selectedMarkerIndex != null"><ion-icon name="bookmark-outline"></ion-icon></div>
+	<div class="control" (click)="onAddMarkerClick()" *ngIf="canEditMarkers && selectedMarkerIndex == null"><ion-icon name="bookmark"></ion-icon></div>
+	<div class="control" (click)="onRemoveMarkerClick()" *ngIf="canEditMarkers && selectedMarkerIndex != null"><ion-icon name="bookmark-outline"></ion-icon></div>
 
 </div>
 

@@ -13,11 +13,15 @@ import {Toast} from "@capacitor/toast";
 })
 export class MarkPage implements AfterViewInit {
 
+	// Re-exports
+	public saveCallback = (() => this.save());
+
+	// Elements ref
 	@ViewChild("waveform")
 	private waveformEditorRef: WaveformEditorComponent;
 
+	// Public attributes
 	public record: Record;
-	public saveCallback = (() => this.save());
 
 	constructor(
 		private route: ActivatedRoute,
@@ -32,16 +36,6 @@ export class MarkPage implements AfterViewInit {
 		// Loading the waveform from the code and not from attribute to allow awaiting.
 		await this.waveformEditorRef.loadRecord(this.record, true);
 
-	}
-
-	async addMarker() {
-		if (!this.waveformEditorRef.addMarkerAtStartTime()) {
-			await Toast.show({text: "Failed to a marker, not enough space!"});
-		}
-	}
-
-	removeMarker() {
-		this.waveformEditorRef.popSelectedMarker();
 	}
 
 	async save() {

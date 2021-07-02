@@ -9,6 +9,7 @@ import {ResizeSensor} from "css-element-queries";
 import WaveformData from "waveform-data";
 import {base64ToBuffer, formatDuration} from "../../utils";
 import {Record} from "../../record";
+import {Toast} from "@capacitor/toast";
 
 
 @Component({
@@ -845,7 +846,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 	addMarker(at: number): boolean {
 
 		if (this.audioBuffer == null) {
-			return;
+			return false;
 		}
 
 		let leftLimit = 0;
@@ -945,11 +946,23 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 
 	clearMarkers() {
 		this.markers.splice(0, this.markers.length);
+		this.setSelectedMarkerIndex(null);
 		this.overlayDraw(false);
 	}
 
 	getMarkers(): WaveformMarker[] {
 		return this.markers;
+	}
+
+	// Callback for internal use
+
+	async onAddMarkerClick() {
+		if (!this.addMarkerAtStartTime()) {
+			await Toast.show({text: "Failed to a marker, not enough space!"});
+		}
+	}
+	async onRemoveMarkerClick() {
+		this.popSelectedMarker();
 	}
 
 }

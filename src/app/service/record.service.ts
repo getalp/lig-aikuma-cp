@@ -1,7 +1,7 @@
 import {Injectable} from '@angular/core';
 
 import {Encoding, Filesystem, ReaddirResult, StatResult} from '@capacitor/filesystem'
-import {LocalNotifications} from "@capacitor/local-notifications";
+// import {LocalNotifications} from "@capacitor/local-notifications";
 import {AikumaNative, ConcatAudioSegment} from "../native";
 
 import {computePath, getCommonOptions, ROOT} from "../files";
@@ -20,7 +20,7 @@ export class RecordService {
 
 	constructor() {
 
-		LocalNotifications.registerActionTypes({
+		/*LocalNotifications.registerActionTypes({
 			types: [
 				{
 					id: "audio_record",
@@ -32,7 +32,7 @@ export class RecordService {
 					]
 				}
 			]
-		}).then();
+		}).then();*/
 
 	}
 
