@@ -12,7 +12,7 @@
 		<ion-list-header>
 			<h5>{{ group.title }}</h5>
 		</ion-list-header>
-		<ion-item button *ngFor="let child of group.children" [routerLink]="child.router == null ? null : child.router.link">
+		<ion-item button *ngFor="let child of group.children" [routerLink]="child.router == null ? null : child.router.link" [disabled]="child.disabled">
 			<ion-icon slot="start" [ios]="child.icon + '-outline'" [md]="child.icon" size="large"></ion-icon>
 			<ion-label>
 				<h2>{{ child.title }}</h2>

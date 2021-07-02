@@ -13,7 +13,7 @@ export class HomePage {
 			title: "Recording",
 			children: [
 				{title: "Recording", icon: "mic", router: {link: "/recording-info/classic"}},
-				{title: "Elicitation", icon: "images", router: {link: "/recording-info/elicitation"}},
+				{title: "Elicitation", icon: "images", router: {link: "/recording-info/elicitation"}, disabled: true},
 			]
 		},
 		{
