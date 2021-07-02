@@ -117,8 +117,12 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 	}
 
 	@Input()
-	set uri(uri: string) {
-		this.load(uri).then();
+	set src(src: string | Record) {
+		if (src instanceof Record) {
+			this.loadRecord(src, true).then();
+		} else {
+			this.loadUri(src).then();
+		}
 	}
 
 	@Input()
@@ -630,7 +634,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 
 	// Public API //
 
-	async load(uri: string) {
+	async loadUri(uri: string) {
 		if (uri !== this.lastUri || this.audioArray == null) {
 			if (uri.startsWith("file://") || uri.startsWith("/")) {
 				await Filesystem.readFile({
@@ -655,7 +659,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 	}
 
 	async loadRecord(record: Record, loadMarkers: boolean = false) {
-		await this.load(record.getAudioUri());
+		await this.loadUri(record.getAudioUri());
 		if (loadMarkers) {
 			this.addMarkersUnsafeFromRecord(record);
 		}

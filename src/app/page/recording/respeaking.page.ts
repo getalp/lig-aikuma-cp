@@ -247,7 +247,7 @@ export class RespeakingPage implements AfterViewInit, OnDestroy {
 			await this.previewWaveformEditorRef.unload();
 		} else {
 			this.selectedMarkerAlreadyRecorded = true;
-			await this.previewWaveformEditorRef.load(tempRecord.uri);
+			await this.previewWaveformEditorRef.loadUri(tempRecord.uri);
 		}
 	}
 
