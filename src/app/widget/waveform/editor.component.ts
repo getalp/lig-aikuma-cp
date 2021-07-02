@@ -102,6 +102,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 			this.resizeSensor.detach();
 			this.resizeSensor = null;
 		}
+		this.unload().then();
 	}
 
 	ngAfterViewInit(): void {
@@ -940,6 +941,11 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 			return marker;
 		}
 		return null;
+	}
+
+	clearMarkers() {
+		this.markers.splice(0, this.markers.length);
+		this.overlayDraw(false);
 	}
 
 	getMarkers(): WaveformMarker[] {
