@@ -1,8 +1,8 @@
 import {Injectable} from '@angular/core';
 
 import {Encoding, Filesystem, ReaddirResult, StatResult} from '@capacitor/filesystem'
-// import {LocalNotifications} from "@capacitor/local-notifications";
 import {AikumaNative, ConcatAudioSegment} from "../native";
+import {KeepAwake} from "@capacitor-community/keep-awake";
 
 import {computePath, getCommonOptions, ROOT} from "../files";
 import {deserializeRecord, Record, RecordSerialized, RecordType, serializeRecord} from "../record";
@@ -260,6 +260,7 @@ export class RawRecorder {
 	resume(): Promise<void> {
 		if (this.isStarted()) {
 			return AikumaNative.resumeRecording().then(() => {
+				KeepAwake.keepAwake().then();
 				this.paused = false;
 			});
 		} else {
@@ -270,6 +271,7 @@ export class RawRecorder {
 			}).then(() => {
 				this.currentPath = path;
 				this.paused = false;
+				KeepAwake.keepAwake().then();
 				/*return LocalNotifications.schedule({
 					notifications: [
 						{
@@ -297,6 +299,7 @@ export class RawRecorder {
 	pause(): Promise<void> {
 		if (this.isStarted()) {
 			return AikumaNative.pauseRecording().then(() => {
+				KeepAwake.allowSleep().then();
 				this.paused = true;
 			});
 		} else {
@@ -315,6 +318,7 @@ export class RawRecorder {
 	stop(): Promise<void> {
 		if (this.isStarted()) {
 			return AikumaNative.stopRecording().then(res => {
+				KeepAwake.allowSleep().then();
 				this.currentPath = null;
 				this.paused = true;
 				this.record.hasAudio = true;
@@ -396,6 +400,7 @@ export class RespeakingRecorder {
 
 		if (this.currentMarkerIndex === markerIndex) {
 			await AikumaNative.resumeRecording();
+			await KeepAwake.keepAwake().then();
 			this.paused = false;
 		} else {
 
@@ -411,11 +416,8 @@ export class RespeakingRecorder {
 					path: this.record.getTempAudioUri(markerIndex),
 					cancelLast: true
 				});
-			} catch (err) {
-				if (err.message === "ALREADY_RECORDING") {
-
-				}
-			}
+				await KeepAwake.keepAwake().then();
+			} catch (err) { }
 
 			this.currentMarkerIndex = markerIndex;
 			this.paused = false;
@@ -427,6 +429,7 @@ export class RespeakingRecorder {
 	async pauseRecording(markerIndex: number) {
 		if (this.currentMarkerIndex === markerIndex) {
 			await AikumaNative.pauseRecording();
+			await KeepAwake.allowSleep().then();
 			this.paused = true;
 		} else {
 			throw "Not recording";
@@ -446,6 +449,7 @@ export class RespeakingRecorder {
 			this.paused = true;
 			this.currentMarkerIndex = null;
 			const info = await AikumaNative.stopRecording();
+			await KeepAwake.allowSleep().then();
 			const uri = "file://" + info.path;
 			if (abort) {
 				await Filesystem.deleteFile({
