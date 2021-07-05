@@ -31,6 +31,12 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		"#ed3211"
 	];
 
+	private static readonly STANDARD_TIME_INTERVALS = [
+		0.1, 0.25, 0.5, 1,
+		2, 5, 10, 15, 30, 60,
+		120, 300, 600, 900, 1800, 3600
+	];
+
 	@ViewChild("container")
 	private containerRef: ElementRef;
 	@ViewChild("canvas")
@@ -433,18 +439,14 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		if (this.showTimeTicks || this.showTimeLabels) {
 
 			const optimalTimeInterval = audioDuration / this.canvasZoom / maxTimeTicksCount;
-			const realTimeInterval =
-				(optimalTimeInterval < 0.1) ? 0.1 :
-				(optimalTimeInterval < 0.25) ? 0.25 :
-				(optimalTimeInterval < 0.5) ? 0.5 :
-				(optimalTimeInterval < 1) ? 1 :
-				(optimalTimeInterval < 2) ? 2 :
-				(optimalTimeInterval < 5) ? 5 :
-				(optimalTimeInterval < 10) ? 10 :
-				(optimalTimeInterval < 15) ? 15 :
-				(optimalTimeInterval < 30) ? 30 :
-				(optimalTimeInterval < 60) ? 60 :
-				Math.ceil(optimalTimeInterval);
+			let realTimeInterval = Math.ceil(optimalTimeInterval);
+
+			for (let interval of WaveformEditorComponent.STANDARD_TIME_INTERVALS) {
+				if (optimalTimeInterval < interval) {
+					realTimeInterval = interval;
+					break;
+				}
+			}
 
 			const pixelsPerSecond = realWidth / audioDuration;
 
