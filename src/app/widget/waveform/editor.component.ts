@@ -1,15 +1,23 @@
 import {
-	Component, Input, ElementRef, OnInit, OnDestroy,
-	AfterViewInit, ViewChild, Output, EventEmitter
+	AfterViewInit,
+	Component,
+	ElementRef,
+	EventEmitter,
+	Input,
+	OnDestroy,
+	OnInit,
+	Output,
+	ViewChild
 } from "@angular/core";
 
 import {Filesystem} from "@capacitor/filesystem";
+import {Toast} from "@capacitor/toast";
 
 import {ResizeSensor} from "css-element-queries";
 import WaveformData from "waveform-data";
-import {base64ToBuffer, formatDuration} from "../../utils";
+
+import {base64ToBuffer, blobToBase64, formatDuration} from "../../utils";
 import {Record} from "../../record";
-import {Toast} from "@capacitor/toast";
 
 
 @Component({
@@ -63,8 +71,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 	private audioCtx: AudioContext;
 	private audioArray: ArrayBuffer;
 	private audioBuffer: AudioBuffer;
-	private waveformData: WaveformData;
-	private waveformMaxSample: number = 0;
+	private waveformData: WaveformDataCache;
 	public audioLoading: boolean = false;
 
 	// Audio playing data
@@ -320,11 +327,28 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 
 	}
 
-	private ensureWaveformData(): Promise<WaveformData> {
+	private async ensureWaveformData(): Promise<WaveformDataCache> {
 
 		if (this.waveformData != null) {
-			return Promise.resolve(this.waveformData);
+			return this.waveformData;
 		}
+
+		/*const cachePath = (this.lastUri != null) ? ("waveform-data-" + Math.abs(getStringHashCode(this.lastUri)) + ".dat") : null;
+
+		if (cachePath != null) {
+			await Toast.show({text: "Cache path: " + cachePath});
+			try {
+				const cachedData = await Filesystem.readFile({
+					directory: Directory.Cache,
+					path: cachePath
+				});
+				this.waveformData = await WaveformDataCache.decodeFromBase64(cachedData.data);
+				await Toast.show({text: "Loaded cache."});
+				return this.waveformData;
+			} catch (e) {}
+		}
+
+		await Toast.show({text: "Loading raw..."});*/
 
 		const config: any = {
 			scale: 512,
@@ -338,32 +362,40 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 					reject(error);
 				} else {
 
-					this.waveformData = waveformData;
-					this.audioBuffer = audioBuffer;
-
 					this.setStartTime(this.startRefTime);
 
-					this.waveformMaxSample = 0;
-
+					const dataCache = new WaveformDataCache(waveformData.length);
 					const channel = waveformData.channel(0);
 					for (let i = 0; i < waveformData.length; ++i) {
-						const maxSample = channel.max_sample(i);
-						const minSample = -channel.min_sample(i);
-						if (maxSample > this.waveformMaxSample)
-							this.waveformMaxSample = maxSample;
-						if (minSample > this.waveformMaxSample)
-							this.waveformMaxSample = minSample;
+						dataCache.setSample(i, -channel.min_sample(i), channel.max_sample(i));
 					}
 
-					resolve(waveformData);
+					this.audioBuffer = audioBuffer;
+					this.waveformData = dataCache;
+					resolve(dataCache);
 
 				}
 			});
 		});
 
+		/*if (cachePath != null) {
+			try {
+				await Toast.show({text: "Saving cached data."});
+				const encodedData = await dataCache.encodeToBase64();
+				await Filesystem.writeFile({
+					directory: Directory.Cache,
+					path: cachePath,
+					data: encodedData
+				});
+				await Toast.show({text: "Saved cached data."});
+			} catch (e) {}
+		}
+
+		return dataCache;*/
+
 	}
 
-	private internalDraw(data: WaveformData) {
+	private internalDraw(data: WaveformDataCache) {
 
 		// Drawing constants
 		const barWidth = 2;
@@ -377,7 +409,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 
 		ctx.clearRect(0, 0, can.width, can.height);
 
-		const channel = data.channel(0);
+		// const channel = data.channel(0);
 		const audioDuration = this.audioBuffer.duration;
 
 		const realWidth = this.canvasZoom * can.width;
@@ -390,7 +422,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		const topHeight = Math.floor(can.height * middlePos);
 		const bottomHeight = can.height - topHeight;
 
-		let overallMaxSample = 0;
+		/*let overallMaxSample = 0;
 
 		for (let i = 0; i < data.length; ++i) {
 			const maxSample = channel.max_sample(i);
@@ -401,7 +433,7 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 			if (minSample > overallMaxSample) {
 				overallMaxSample = minSample;
 			}
-		}
+		}*/
 
 		for (let i = 0; i < barCount; ++i) {
 
@@ -419,12 +451,12 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 					i = barCount;
 					break;
 				}
-				maxSample += channel.max_sample(j);
-				minSample += channel.min_sample(j);
+				maxSample += data.getMaxSample(j);
+				minSample += data.getMinSample(j);
 			}
 
-			const maxHeight = topHeight * (maxSample / barSamplesFloor / this.waveformMaxSample);
-			const minHeight = bottomHeight * (minSample / barSamplesFloor / -this.waveformMaxSample);
+			const maxHeight = topHeight * (maxSample / barSamplesFloor / data.overallMaxSample);
+			const minHeight = bottomHeight * (minSample / barSamplesFloor / data.overallMaxSample);
 
 			ctx.fillStyle = "#333";
 			ctx.fillRect(barOffset, topHeight - maxHeight, barWidth, maxHeight);
@@ -638,8 +670,10 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 
 	// Public API //
 
-	async loadUri(uri: string) {
-		if (uri !== this.lastUri || this.audioArray == null) {
+	async loadUri(uri: string | null) {
+		if (uri == null) {
+			await this.unload();
+		} else if (uri !== this.lastUri || this.audioArray == null) {
 			if (uri.startsWith("file://") || uri.startsWith("/")) {
 				await Filesystem.readFile({
 					path: uri
@@ -647,14 +681,14 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 					return base64ToBuffer(res.data);
 				}).then(buf => {
 					this.lastUri = uri;
-					return this.loadAudioArray(buf);
+					return this.loadAudioArrayInternal(buf);
 				});
 			} else if (uri.startsWith("http://") || uri.startsWith("https://")) {
 				await fetch(uri)
 					.then(res => res.arrayBuffer())
 					.then(buf => {
 						this.lastUri = uri;
-						return this.loadAudioArray(buf);
+						return this.loadAudioArrayInternal(buf);
 					});
 			} else {
 				throw "Invalid URI protocol for audio file (" + uri + ").";
@@ -670,6 +704,16 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 	}
 
 	async loadAudioArray(buf: ArrayBuffer) {
+		this.lastUri = null;
+		await this.loadAudioArrayInternal(buf);
+	}
+
+	async unload() {
+		this.lastUri = null;
+		await this.loadAudioArrayInternal(null);
+	}
+
+	private async loadAudioArrayInternal(buf: ArrayBuffer) {
 		await this.stop();
 		this.audioLoading = true;
 		this.audioArray = buf;
@@ -680,10 +724,6 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		await this.drawIfPossible();
 		this.overlayDraw(false);
 		this.audioLoading = false;
-	}
-
-	async unload() {
-		await this.loadAudioArray(null);
 	}
 
 	isLoaded(): boolean {
@@ -978,4 +1018,52 @@ export interface WaveformMarker {
 interface Control {
 	icon: string;
 	click?: ((this: GlobalEventHandlers, ev: MouseEvent) => any) | null;
+}
+
+
+class WaveformDataCache {
+
+	public overallMaxSample: number = 0;
+
+	constructor(public readonly length: number, private readonly samples: Uint8Array = null) {
+		const doubleLength = this.length << 1;
+		if (this.samples == null || this.samples.length !== doubleLength) {
+			this.samples = new Uint8Array(doubleLength);
+		}
+	}
+
+	setSample(idx: number, min: number, max: number) {
+		idx <<= 1;
+		this.samples[idx] = min;
+		this.samples[idx + 1] = max;
+		if (min > this.overallMaxSample) this.overallMaxSample = min;
+		if (max > this.overallMaxSample) this.overallMaxSample = max;
+	}
+
+	getMinSample(idx: number): number {
+		return this.samples[idx << 1];
+	}
+
+	getMaxSample(idx: number): number {
+		return this.samples[(idx << 1) + 1];
+	}
+
+	encodeToBase64(): Promise<string> {
+		return blobToBase64(new Blob([
+			new Uint32Array([this.length, this.overallMaxSample]),
+			this.samples
+		], {
+			type: "application/octet-stream"
+		}));
+	}
+
+	static decodeFromBase64(base64: string): Promise<WaveformDataCache> {
+		const buf = base64ToBuffer(base64);
+		const header = new Uint32Array(buf, 0, 8);
+		const samples = new Uint8Array(buf, 8);
+		const data = new WaveformDataCache(header[0], samples);
+		data.overallMaxSample = header[1];
+		return Promise.resolve(data);
+	}
+
 }

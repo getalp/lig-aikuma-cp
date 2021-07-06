@@ -171,6 +171,13 @@ export class RecordService {
 
 		delete this.records[record.dirName];
 
+		if (record.parent != null) {
+			const idx = record.parent.children.indexOf(record);
+			if (idx != null) {
+				record.parent.children.splice(idx, 1);
+			}
+		}
+
 	}
 
 	async saveRecord(record: Record): Promise<void> {
@@ -400,7 +407,7 @@ export class RespeakingRecorder {
 
 		if (this.currentMarkerIndex === markerIndex) {
 			await AikumaNative.resumeRecording();
-			await KeepAwake.keepAwake().then();
+			KeepAwake.keepAwake().then();
 			this.paused = false;
 		} else {
 
@@ -416,7 +423,7 @@ export class RespeakingRecorder {
 					path: this.record.getTempAudioUri(markerIndex),
 					cancelLast: true
 				});
-				await KeepAwake.keepAwake().then();
+				KeepAwake.keepAwake().then();
 			} catch (err) { }
 
 			this.currentMarkerIndex = markerIndex;
@@ -429,7 +436,7 @@ export class RespeakingRecorder {
 	async pauseRecording(markerIndex: number) {
 		if (this.currentMarkerIndex === markerIndex) {
 			await AikumaNative.pauseRecording();
-			await KeepAwake.allowSleep().then();
+			KeepAwake.allowSleep().then();
 			this.paused = true;
 		} else {
 			throw "Not recording";
@@ -449,7 +456,7 @@ export class RespeakingRecorder {
 			this.paused = true;
 			this.currentMarkerIndex = null;
 			const info = await AikumaNative.stopRecording();
-			await KeepAwake.allowSleep().then();
+			KeepAwake.allowSleep().then();
 			const uri = "file://" + info.path;
 			if (abort) {
 				await Filesystem.deleteFile({

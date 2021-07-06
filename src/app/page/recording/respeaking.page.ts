@@ -1,14 +1,15 @@
 import {AfterViewInit, Component, NgZone, OnDestroy, ViewChild} from '@angular/core';
-import {Record, RecordType} from "../../record";
-import {ActivatedRoute} from "@angular/router";
-import {RecordService, RespeakingRecorder} from "../../service/record.service";
-import {WaveformEditorComponent, WaveformMarker} from "../../widget/waveform/editor.component";
-import {Toast} from "@capacitor/toast";
+import {PluginListenerHandle} from "@capacitor/core/types/definitions";
+import {ActivatedRoute, Router} from "@angular/router";
 import {AlertController} from "@ionic/angular";
+import {Location} from "@angular/common";
+import {Toast} from "@capacitor/toast";
+
+import {WaveformEditorComponent, WaveformMarker} from "../../widget/waveform/editor.component";
+import {RecordService, RespeakingRecorder} from "../../service/record.service";
+import {Record, RecordType} from "../../record";
 import {formatDuration} from "../../utils";
 import {AikumaNative} from "../../native";
-import {PluginListenerHandle} from "@capacitor/core/types/definitions";
-import {Location} from "@angular/common";
 
 
 @Component({
@@ -49,7 +50,8 @@ export class RespeakingPage implements AfterViewInit, OnDestroy {
 		private route: ActivatedRoute,
 		private recordService: RecordService,
 		private alertController: AlertController,
-		private location: Location
+		private location: Location,
+		private router: Router
 	) { }
 
 	async ngAfterViewInit() {
@@ -252,11 +254,10 @@ export class RespeakingPage implements AfterViewInit, OnDestroy {
 	}
 
 	private async doGlobalSave() {
+		await Toast.show({text: "Saving respeaking..."});
 		await this.respeakingRecorder.saveRespeaking();
-		// Go back to records list
-		this.location.back();
-		this.location.back();
-		this.location.back();
+		await Toast.show({text: "Saved respeaking!"});
+		await this.router.navigateByUrl("/record/" + this.record.parent.dirName);
 	}
 
 }

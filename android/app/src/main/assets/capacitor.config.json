@@ -13,5 +13,8 @@
 			"iconColor": "#488AFF"
 		}
 	},
-	"cordova": {}
+	"cordova": {},
+	"server": {
+		"url": "http://192.168.1.23:8100"
+	}
 }

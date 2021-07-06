@@ -43,3 +43,14 @@ export function formatDuration(dur: number, precision: number = 0): string {
 export function getNullablePropertyOrDefault<E, K extends keyof E>(obj: E, name: K, def: E[K]): E[K] {
 	return obj == null ? def : obj[name];
 }
+
+export function getStringHashCode(str: string): number {
+	let hash: number = 0, i: number, chr: number;
+	if (str.length === 0) return hash;
+	for (i = 0; i < str.length; i++) {
+		chr = str.charCodeAt(i);
+		hash = ((hash << 5) - hash) + chr;
+		hash |= 0; // Convert to 32bit integer
+	}
+	return hash;
+}
