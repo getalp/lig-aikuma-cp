@@ -41,9 +41,6 @@ export class Iso639Service {
 						langages.push(lang);
 						langagesAssociated[lang.code] = lang;
 					}
-					langages.sort((a, b) => {
-						return a.printName.localeCompare(b.printName);
-					});
 					resolve({
 						list: langages,
 						associated: langagesAssociated

@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">lig-aikuma-cp</string>
-    <string name="title_activity_main">lig-aikuma-cp</string>
+    <string name="app_name">LIG Aikuma CP</string>
+    <string name="title_activity_main">LIG Aikuma CP</string>
     <string name="package_name">org.getalp.ligaikumacp</string>
     <string name="custom_url_scheme">org.getalp.ligaikumacp</string>
 </resources>
