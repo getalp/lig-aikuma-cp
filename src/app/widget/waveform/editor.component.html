@@ -25,7 +25,7 @@
 </div>
 
 <div class="waveform-editor-controls right">
-	<div *ngFor="let control of moreControls" class="{{ control == null ? 'spacer' : 'control' }}" (click)="control.click($event)">
+	<div *ngFor="let control of moreControls" class="{{ control == null ? 'spacer' : 'control' }}" (click)="onControlClick(control, $event)">
 		<ion-icon *ngIf="control != null" name="{{ control.icon }}"></ion-icon>
 	</div>
 </div>

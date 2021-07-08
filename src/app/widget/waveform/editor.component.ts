@@ -1007,6 +1007,14 @@ export class WaveformEditorComponent implements OnInit, OnDestroy, AfterViewInit
 		this.popSelectedMarker();
 	}
 
+	// For template
+
+	onControlClick(control: Control, event: MouseEvent) {
+		if (control != null) {
+			control.click(event);
+		}
+	}
+
 }
 
 
@@ -1017,7 +1025,7 @@ export interface WaveformMarker {
 
 interface Control {
 	icon: string;
-	click?: ((this: GlobalEventHandlers, ev: MouseEvent) => any) | null;
+	click?: ((ev: MouseEvent) => any) | null;
 }
 
 

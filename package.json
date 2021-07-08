@@ -9,9 +9,9 @@
     "build": "ng build",
     "lint": "ng lint",
     "android-live": "ionic cap run android --open -l --external",
-    "android": "ionic cap run android --open",
+    "android": "ionic cap run android --open --prod",
     "ios-live": "ionic cap run ios --open -l --external",
-    "ios": "ionic cap run ios --open",
+    "ios": "ionic cap run ios --open --prod",
     "electron": "ionic cap run @capacitor-community/electron"
   },
   "private": true,
